@@ -1,0 +1,6 @@
+{
+  "name": "한솔종합부러쉬 -1",
+  "description": "산업용·특수 맞춤형 브러쉬 제작 전문 한솔종합부러쉬 공식 웹사이트입니다.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
