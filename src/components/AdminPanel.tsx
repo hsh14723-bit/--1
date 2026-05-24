@@ -91,7 +91,7 @@ export default function AdminPanel({
     } else if (username === 'admin' && password === '1234') {
       onLoginSuccess();
     } else {
-      setLoginError('아이디 또는 비밀번호가 올바르지 않습니다. (테스트 아이디: admin / 비밀번호: admin 또는 1234)');
+      setLoginError('아이디 또는 비밀번호가 올바르지 않습니다.');
     }
   };
 
@@ -188,7 +188,7 @@ export default function AdminPanel({
                 <input
                   id="username"
                   type="text"
-                  placeholder="admin"
+                  placeholder="아이디 입력"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   className="w-full bg-slate-50 border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-xl px-4 py-3 text-sm font-semibold outline-none transition"
@@ -204,7 +204,7 @@ export default function AdminPanel({
                 <input
                   id="password"
                   type="password"
-                  placeholder="admin 또는 1234 입력"
+                  placeholder="비밀번호 입력"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full bg-slate-50 border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-xl px-4 py-3 text-sm font-semibold outline-none transition"
@@ -226,13 +226,6 @@ export default function AdminPanel({
               <ArrowRight size={16} />
             </button>
           </form>
-
-          <div className="mt-8 pt-6 border-t border-slate-100 text-center">
-            <p className="text-[11px] text-slate-400 font-semibold leading-relaxed">
-              테스트 편의를 위한 마스터 인증 정보:<br />
-              <span className="text-slate-600 font-bold">아이디: admin / 비밀번호: admin 또는 1234</span>
-            </p>
-          </div>
 
         </div>
       </section>
