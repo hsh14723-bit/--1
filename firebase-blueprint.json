@@ -1,0 +1,84 @@
+{
+  "entities": {
+    "GalleryItem": {
+      "title": "GalleryItem",
+      "description": "A portfolio/gallery item showcasing brush production cases or site delivery photos.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier of the gallery item."
+        },
+        "title": {
+          "type": "string",
+          "description": "Brief title or header for the gallery item."
+        },
+        "description": {
+          "type": "string",
+          "description": "Detailed description of the product or work shown."
+        },
+        "category": {
+          "type": "string",
+          "enum": ["production", "industry"],
+          "description": "Product category."
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "Base64 encoded string or URL of the image."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "ISO date string of creation date."
+        }
+      },
+      "required": ["id", "title", "category", "imageUrl", "createdAt"]
+    },
+    "Inquiry": {
+      "title": "Inquiry",
+      "description": "An inquiry / estimate request submitted by a prospective client.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier of the inquiry."
+        },
+        "clientName": {
+          "type": "string",
+          "description": "Name or handle of the client requesting the quote."
+        },
+        "phone": {
+          "type": "string",
+          "description": "Callback phone number."
+        },
+        "brushType": {
+          "type": "string",
+          "description": "The category or model of brush requested."
+        },
+        "content": {
+          "type": "string",
+          "description": "Custom inquiry or request note content."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "ISO date string of submission date."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "completed"],
+          "description": "Current resolution status."
+        }
+      },
+      "required": ["id", "clientName", "phone", "brushType", "content", "createdAt", "status"]
+    }
+  },
+  "firestore": {
+    "/gallery/{galleryId}": {
+      "schema": "GalleryItem",
+      "description": "Exposes globally uploaded cases and installation photos to all site visitors."
+    },
+    "/inquiries/{inquiryId}": {
+      "schema": "Inquiry",
+      "description": "Allows clients to request estimates and allows staff to manage them."
+    }
+  }
+}

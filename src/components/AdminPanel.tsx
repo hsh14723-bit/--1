@@ -99,16 +99,24 @@ export default function AdminPanel({
     }
   };
 
-  // Convert File to Base64 (original raw data, uncompressed)
+  // Convert File to Base64 and compress standard mobile images in browser
   const processFile = (file: File) => {
     if (!file.type.startsWith('image/')) {
       alert('이미지 파일포맷만 지원합니다.');
       return;
     }
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       if (e.target?.result) {
-        setImageUrl(e.target.result as string);
+        const rawBase64 = e.target.result as string;
+        try {
+          const { compressImageIfNeeded } = await import('../utils/imageCompressor');
+          const optimized = await compressImageIfNeeded(rawBase64);
+          setImageUrl(optimized);
+        } catch (err) {
+          console.warn('Image compression failed, using raw base64:', err);
+          setImageUrl(rawBase64);
+        }
       }
     };
     reader.readAsDataURL(file);

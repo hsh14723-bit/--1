@@ -1,4 +1,14 @@
 import { useState, useEffect } from 'react';
+import { 
+  collection, 
+  onSnapshot, 
+  setDoc, 
+  doc, 
+  deleteDoc, 
+  updateDoc 
+} from 'firebase/firestore';
+import { db, handleFirestoreError, OperationType } from './firebase';
+import { compressImageIfNeeded } from './utils/imageCompressor';
 import Navbar from './components/Navbar';
 import HeroSection from './components/HeroSection';
 import AboutSection from './components/AboutSection';
@@ -62,84 +72,193 @@ export default function App() {
     }
   };
 
-  // Gallery items persistence with LocalStorage (Initialized to starting two items, previous custom pictures are removed as requested)
-  const [galleryItems, setGalleryItems] = useState<GalleryItem[]>(() => {
-    try {
-      const saved = localStorage.getItem('hansol_gallery_v25');
-      return saved ? JSON.parse(saved) : INITIAL_GALLERY;
-    } catch (e) {
-      console.error('Failed to parse galleryItems from localStorage', e);
-      return INITIAL_GALLERY;
-    }
-  });
+  // Gallery items state (Starts with preset items, updated live from Firestore)
+  const [galleryItems, setGalleryItems] = useState<GalleryItem[]>(INITIAL_GALLERY);
 
-  // Client inquiries persistence with LocalStorage
-  const [inquiries, setInquiries] = useState<Inquiry[]>(() => {
-    try {
-      const saved = localStorage.getItem('hansol_inquiries_v4');
-      return saved ? JSON.parse(saved) : [
-        {
-          id: 'inq-1',
-          clientName: '김태윤 차장 (현대건설 현장관리)',
-          phone: '010-9876-5432',
-          brushType: '굴삭기 청소솔 – 쎈솔',
-          content: '인천 송도 아파트 토목 건설 현장에서 쓸 버킷 결착용 쎈솔 5대 특별 가공 및 단가 견적을 메일 혹은 문자로 우선 부탁드립니다.',
-          createdAt: '2026-05-21',
-          status: 'pending'
-        },
-        {
-          id: 'inq-2',
-          clientName: '김한아 매니저 (골프존파크 대화공단점)',
-          phone: '010-1234-5678',
-          brushType: '골프장/스크린골프용 브러쉬',
-          content: '스크린골프 타격 연습장 벙커용 특수매트 8세트 주문 가공 요청드립니다. 기성 사이즈 600x400 호환 여부 궁금합니다.',
-          createdAt: '2026-05-23',
-          status: 'completed'
-        }
-      ];
-    } catch (e) {
-      console.error('Failed to parse inquiries from localStorage', e);
-      return [
-        {
-          id: 'inq-1',
-          clientName: '김태윤 차장 (현대건설 현장관리)',
-          phone: '010-9876-5432',
-          brushType: '굴삭기 청소솔 – 쎈솔',
-          content: '인천 송도 아파트 토목 건설 현장에서 쓸 버킷 결착용 쎈솔 5대 특별 가공 및 단가 견적을 메일 혹은 문자로 우선 부탁드립니다.',
-          createdAt: '2026-05-21',
-          status: 'pending'
-        },
-        {
-          id: 'inq-2',
-          clientName: '김한아 매니저 (골프존파크 대화공단점)',
-          phone: '010-1234-5678',
-          brushType: '골프장/스크린골프용 브러쉬',
-          content: '스크린골프 타격 연습장 벙커용 특수매트 8세트 주문 가공 요청드립니다. 기성 사이즈 600x400 호환 여부 궁금합니다.',
-          createdAt: '2026-05-23',
-          status: 'completed'
-        }
-      ];
-    }
-  });
+  // Client inquiries state (Starts empty, updated live from Firestore)
+  const [inquiries, setInquiries] = useState<Inquiry[]>([]);
 
+  // Test Firestore Connection on startup
   useEffect(() => {
-    try {
-      localStorage.setItem('hansol_gallery_v25', JSON.stringify(galleryItems));
-    } catch (e: any) {
-      console.warn('Unable to write galleryItems to localStorage', e);
-      if (e.name === 'QuotaExceededError' || e.code === 22) {
-        alert('저장 용량이 초과되어 사진을 저장할 수 없습니다.\n불필요한 제품 사진을 갤러리 관리 목록에서 삭제하여 주시기 바랍니다.');
+    async function testFirestore() {
+      try {
+        const { getDocFromServer } = await import('firebase/firestore');
+        await getDocFromServer(doc(db, 'gallery', 'connection_test'));
+      } catch (err) {
+        console.warn('Firestore connectivity notification:', err);
       }
     }
-  }, [galleryItems]);
+    testFirestore();
+  }, []);
 
+  // One-time check and seed of gallery defaults on app startup
   useEffect(() => {
-    try {
-      localStorage.setItem('hansol_inquiries_v4', JSON.stringify(inquiries));
-    } catch (e) {
-      console.warn('Unable to write inquiries to localStorage', e);
+    async function seedGalleryIfEmpty() {
+      try {
+        const { getDocs, collection, writeBatch, doc } = await import('firebase/firestore');
+        const snap = await getDocs(collection(db, 'gallery'));
+        if (snap.empty) {
+          console.log('Gallery collection empty on startup. Seeding initial presets...');
+          const batch = writeBatch(db);
+          INITIAL_GALLERY.forEach((item) => {
+            batch.set(doc(db, 'gallery', item.id), item);
+          });
+          await batch.commit();
+        }
+      } catch (e) {
+        console.warn('One-time gallery seeding check ignored or failed:', e);
+      }
     }
-  }, [inquiries]);
+    const timer = setTimeout(() => {
+      seedGalleryIfEmpty();
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // One-time check and seed of inquiries defaults on app startup
+  useEffect(() => {
+    async function seedInquiriesIfEmpty() {
+      try {
+        const { getDocs, collection, writeBatch, doc } = await import('firebase/firestore');
+        const snap = await getDocs(collection(db, 'inquiries'));
+        if (snap.empty) {
+          console.log('Inquiries collection empty on startup. Seeding default inquiries...');
+          const defaultInquiries: Inquiry[] = [
+            {
+              id: 'inq-1',
+              clientName: '김태윤 차장 (현대건설 현장관리)',
+              phone: '010-9876-5432',
+              brushType: '굴삭기 청소솔 – 쎈솔',
+              content: '인천 송도 아파트 토목 건설 현장에서 쓸 버킷 결착용 쎈솔 5대 특별 가공 및 단가 견적을 메일 혹은 문자로 우선 부탁드립니다.',
+              createdAt: '2026-05-21',
+              status: 'pending'
+            },
+            {
+              id: 'inq-2',
+              clientName: '김한아 매니저 (골프존파크 대화공단점)',
+              phone: '010-1234-5678',
+              brushType: '골프장/스크린골프용 브러쉬',
+              content: '스크린골프 타격 연습장 벙커용 특수매트 8세트 주문 가공 요청드립니다. 기성 사이즈 600x400 호환 여부 궁금합니다.',
+              createdAt: '2026-05-23',
+              status: 'completed'
+            }
+          ];
+          const batch = writeBatch(db);
+          defaultInquiries.forEach((inq) => {
+            batch.set(doc(db, 'inquiries', inq.id), inq);
+          });
+          await batch.commit();
+        }
+      } catch (e) {
+        console.warn('One-time inquiries seeding check ignored or failed:', e);
+      }
+    }
+    const timer = setTimeout(() => {
+      seedInquiriesIfEmpty();
+    }, 2500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Real-time synchronization for Gallery Items with Firebase Firestore (Passive, no write loops!)
+  useEffect(() => {
+    const path = 'gallery';
+    const unsubscribe = onSnapshot(collection(db, path), (snapshot) => {
+      if (snapshot.empty) {
+        // Fallback to local INITIAL_GALLERY if Firestore is completely empty
+        setGalleryItems(INITIAL_GALLERY);
+      } else {
+        const items: GalleryItem[] = [];
+        snapshot.forEach((docSnap) => {
+          items.push(docSnap.data() as GalleryItem);
+        });
+        // Sort newest first
+        items.sort((a, b) => b.createdAt.localeCompare(a.createdAt) || b.id.localeCompare(a.id));
+        setGalleryItems(items);
+      }
+    }, (error) => {
+      handleFirestoreError(error, OperationType.GET, path);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // Real-time synchronization for Inquiries with Firebase Firestore (Passive, no write loops!)
+  useEffect(() => {
+    const path = 'inquiries';
+    const unsubscribe = onSnapshot(collection(db, path), (snapshot) => {
+      if (snapshot.empty) {
+        setInquiries([]);
+      } else {
+        const items: Inquiry[] = [];
+        snapshot.forEach((docSnap) => {
+          items.push(docSnap.data() as Inquiry);
+        });
+        items.sort((a, b) => b.id.localeCompare(a.id));
+        setInquiries(items);
+      }
+    }, (error) => {
+      handleFirestoreError(error, OperationType.GET, path);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // Migrate items stored in historical LocalStorage to Firestore once with automatic compression!
+  useEffect(() => {
+    async function migrateLocalStorage() {
+      try {
+        const priorKeys = [
+          'hansol_gallery_v25',
+          'hansol_gallery_v24',
+          'hansol_gallery_v23',
+          'hansol_gallery_v22',
+          'hansol_gallery_v21',
+          'hansol_gallery_v20',
+          'hansol_gallery_v1',
+          'hansol_gallery'
+        ];
+        
+        for (const key of priorKeys) {
+          const raw = localStorage.getItem(key);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) {
+              for (const item of parsed) {
+                if (item && item.id && item.id !== 'gal-1' && item.id !== 'gal-2') {
+                  // Verify that it is a valid GalleryItem object
+                  if (item.title && item.imageUrl && item.category && item.createdAt) {
+                    try {
+                      // Compress historical local base64 image so it fits within Firestore's 1M limit
+                      console.log('Compressing historical local image for:', item.title);
+                      const optimizedUrl = await compressImageIfNeeded(item.imageUrl);
+                      await setDoc(doc(db, 'gallery', item.id), {
+                        id: item.id,
+                        title: item.title,
+                        category: item.category,
+                        imageUrl: optimizedUrl,
+                        createdAt: item.createdAt,
+                        ...(item.description ? { description: item.description } : {})
+                      });
+                      console.log('Successfully migrated item to Firebase:', item.title);
+                    } catch (e) {
+                      console.error('Error migrating item:', item.id, e);
+                    }
+                  }
+                }
+              }
+              break;
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('Migration from localStorage skipped or failed:', err);
+      }
+    }
+    const timer = setTimeout(() => {
+      migrateLocalStorage();
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     try {
@@ -150,41 +269,69 @@ export default function App() {
   }, [isAdmin]);
 
   // Gallery Management handlers
-  const handleAddGalleryItem = (newItem: Omit<GalleryItem, 'id' | 'createdAt'>) => {
-    const freshItem: GalleryItem = {
-      ...newItem,
-      id: `gal-${Date.now()}`,
-      createdAt: new Date().toISOString().split('T')[0]
-    };
-    setGalleryItems((prev) => [freshItem, ...prev]);
+  const handleAddGalleryItem = async (newItem: Omit<GalleryItem, 'id' | 'createdAt'>) => {
+    const guid = `gal-${Date.now()}`;
+    const path = 'gallery';
+    try {
+      console.log('Optimizing selected image before storing in secure database...');
+      const optimizedUrl = await compressImageIfNeeded(newItem.imageUrl);
+      const freshItem: GalleryItem = {
+        ...newItem,
+        imageUrl: optimizedUrl,
+        id: guid,
+        createdAt: new Date().toISOString().split('T')[0]
+      };
+      await setDoc(doc(db, path, guid), freshItem);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.WRITE, `${path}/${guid}`);
+    }
   };
 
-  const handleDeleteGalleryItem = (id: string) => {
+  const handleDeleteGalleryItem = async (id: string) => {
     if (window.confirm('해당 제품 사진을 아카이브에서 영구 차단하시겠습니까?')) {
-      setGalleryItems((prev) => prev.filter((item) => item.id !== id));
+      const path = 'gallery';
+      try {
+        await deleteDoc(doc(db, path, id));
+      } catch (error) {
+        handleFirestoreError(error, OperationType.DELETE, `${path}/${id}`);
+      }
     }
   };
 
   // Inquiry management handlers
-  const handleAddInquiry = (newInq: Omit<Inquiry, 'id' | 'createdAt' | 'status'>) => {
+  const handleAddInquiry = async (newInq: Omit<Inquiry, 'id' | 'createdAt' | 'status'>) => {
+    const guid = `inq-${Date.now()}`;
     const freshInq: Inquiry = {
       ...newInq,
-      id: `inq-${Date.now()}`,
+      id: guid,
       createdAt: new Date().toISOString().split('T')[0],
       status: 'pending'
     };
-    setInquiries((prev) => [freshInq, ...prev]);
+    const path = 'inquiries';
+    try {
+      await setDoc(doc(db, path, guid), freshInq);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.WRITE, `${path}/${guid}`);
+    }
   };
 
-  const handleUpdateInquiryStatus = (id: string, status: 'pending' | 'completed') => {
-    setInquiries((prev) =>
-      prev.map((inq) => (inq.id === id ? { ...inq, status } : inq))
-    );
+  const handleUpdateInquiryStatus = async (id: string, status: 'pending' | 'completed') => {
+    const path = 'inquiries';
+    try {
+      await updateDoc(doc(db, path, id), { status });
+    } catch (error) {
+      handleFirestoreError(error, OperationType.UPDATE, `${path}/${id}`);
+    }
   };
 
-  const handleDeleteInquiry = (id: string) => {
+  const handleDeleteInquiry = async (id: string) => {
     if (window.confirm('접수된 견적 의뢰 내역을 삭제 처리하시겠습니까?')) {
-      setInquiries((prev) => prev.filter((inq) => inq.id !== id));
+      const path = 'inquiries';
+      try {
+        await deleteDoc(doc(db, path, id));
+      } catch (error) {
+        handleFirestoreError(error, OperationType.DELETE, `${path}/${id}`);
+      }
     }
   };
 

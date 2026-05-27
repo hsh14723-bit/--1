@@ -1,0 +1,53 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net - Default Deny Catch-All
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Identifiers and Type validation helpers
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidGalleryItem(data) {
+      return data.keys().hasAll(['id', 'title', 'category', 'imageUrl', 'createdAt'])
+        && (data.keys().size() == 5 || (data.keys().size() == 6 && data.keys().hasAll(['description'])))
+        && data.id is string && data.id.size() <= 128
+        && data.title is string && data.title.size() <= 128
+        && (data.keys().size() == 5 || (data.description is string && data.description.size() <= 1000))
+        && (data.category == 'production' || data.category == 'industry')
+        && data.imageUrl is string && data.imageUrl.size() <= 10000000
+        && data.createdAt is string && data.createdAt.size() <= 64;
+    }
+
+    function isValidInquiry(data) {
+      return data.keys().hasAll(['id', 'clientName', 'phone', 'brushType', 'content', 'createdAt', 'status'])
+        && data.keys().size() == 7
+        && data.id is string && data.id.size() <= 128
+        && data.clientName is string && data.clientName.size() <= 128
+        && data.phone is string && data.phone.size() <= 32
+        && data.brushType is string && data.brushType.size() <= 128
+        && data.content is string && data.content.size() <= 3000
+        && data.createdAt is string && data.createdAt.size() <= 64
+        && (data.status == 'pending' || data.status == 'completed');
+    }
+
+    // Collection: Gallery Items
+    match /gallery/{galleryId} {
+      allow get, list: if true;
+      allow create: if isValidId(galleryId) && isValidGalleryItem(request.resource.data);
+      allow delete: if true;
+    }
+
+    // Collection: Inquiries
+    match /inquiries/{inquiryId} {
+      allow get, list, delete: if true;
+      allow create: if isValidId(inquiryId) && isValidInquiry(request.resource.data);
+      allow update: if isValidInquiry(request.resource.data)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
+    }
+  }
+}
