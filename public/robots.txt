@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://hansol-brush.netlify.app/sitemap.xml
+Sitemap: https://1-ecru-five.vercel.app/sitemap.xml
