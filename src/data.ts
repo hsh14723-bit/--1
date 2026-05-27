@@ -2,6 +2,7 @@ import { GalleryItem, ProductType, KeyProduct } from './types';
 
 export const GOLF_BUNKER_IMAGE = 'https://file.yeogie.com/img.secondhand/202103/p13VH8vbDJ.jpg';
 export const EXCAVATOR_BRUSH_IMAGE = 'https://file.yeogie.com/img.secondhand/202301/nqX0lqAp4j.jpg';
+export const BRASS_RING_IMAGE = '/images/brass_ring_brush.png';
 
 export const BRUSH_IMAGE_PRIMARY = GOLF_BUNKER_IMAGE;
 
@@ -87,7 +88,7 @@ export const INITIAL_GALLERY: GalleryItem[] = [
   {
     id: 'gal-1',
     title: '골프존 인조잔디 벙커 전용 매트 납품',
-    description: '스크린골프 매장 50여 곳에 고탄성 특수 브러쉬 매트 일괄 생산 공급',
+    description: '',
     category: 'production',
     imageUrl: GOLF_BUNKER_IMAGE,
     createdAt: '2026-05-10'
@@ -95,25 +96,9 @@ export const INITIAL_GALLERY: GalleryItem[] = [
   {
     id: 'gal-2',
     title: '도로 세척용 쎈솔(굴삭기 솔) 맞춤형 출고',
-    description: '건설 현장에서 흙먼지 비산 방지를 위해 버킷 부착형 쎈솔 15세트 정밀 제작',
+    description: '',
     category: 'production',
     imageUrl: EXCAVATOR_BRUSH_IMAGE,
     createdAt: '2026-05-18'
-  },
-  {
-    id: 'gal-3',
-    title: '식품 가공 공장 식품 등급 롤 브러쉬 시공 사례',
-    description: 'HACCP 인증에 걸맞는 무독성 나일론 항균 원사 사용 오렌지 세척 롤 브러쉬 시공',
-    category: 'industry',
-    imageUrl: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&q=80&w=600',
-    createdAt: '2026-04-22'
-  },
-  {
-    id: 'gal-4',
-    title: '철강 코일 세정 라인용 강선 롤 브러쉬 제작',
-    description: '고온의 금속 평활도를 위해 연마력이 우수한 고탄소 와이어 함유 특수 롤 브러쉬 납품',
-    category: 'industry',
-    imageUrl: 'https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?auto=format&fit=crop&q=80&w=600',
-    createdAt: '2026-05-02'
   }
 ];

@@ -97,7 +97,7 @@ export default function GallerySection({ galleryItems, onNavigateToAdmin }: Gall
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.9 }}
                   transition={{ duration: 0.3 }}
-                  className="bg-white border border-slate-100 rounded-2xl overflow-hidden shadow-xs hover:shadow-lg transition-all flex flex-col justify-between group"
+                  className="bg-white border border-slate-100 rounded-2xl overflow-hidden shadow-xs hover:shadow-lg transition-all flex flex-col group"
                 >
                   {/* Photo Frame */}
                   <div className="relative w-full aspect-4/3 bg-slate-100 overflow-hidden">
@@ -125,25 +125,14 @@ export default function GallerySection({ galleryItems, onNavigateToAdmin }: Gall
                     </span>
                   </div>
 
-                  {/* Descriptions block */}
-                  <div className="p-5 flex-1 flex flex-col justify-between">
-                    <div>
-                      <h3 className="text-sm sm:text-base font-extrabold text-slate-950 tracking-tight leading-snug line-clamp-1 mb-1.5">
+                  {/* Clean, minimal title only under Card - No description paragraphs or date icons */}
+                  {item.title && (
+                    <div className="p-3 bg-white text-center border-t border-slate-50 flex items-center justify-center">
+                      <h3 className="text-xs sm:text-sm font-extrabold text-slate-800 tracking-tight leading-snug truncate max-w-full">
                         {item.title}
                       </h3>
-                      <p className="text-xs text-slate-500 leading-relaxed line-clamp-2">
-                        {item.description}
-                      </p>
                     </div>
-
-                    <div className="mt-4 pt-3 border-t border-slate-50 flex items-center justify-between text-[10px] font-mono text-slate-400">
-                      <div className="flex items-center space-x-1">
-                        <Calendar size={11} />
-                        <span>{item.createdAt}</span>
-                      </div>
-                      <span className="text-emerald-600 font-semibold uppercase">Hansol Brush</span>
-                    </div>
-                  </div>
+                  )}
                 </motion.div>
               ))}
             </AnimatePresence>
@@ -205,9 +194,11 @@ export default function GallerySection({ galleryItems, onNavigateToAdmin }: Gall
                     {activeModalItem.title}
                   </h3>
                   
-                  <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
-                    {activeModalItem.description}
-                  </p>
+                  {activeModalItem.description ? (
+                    <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
+                      {activeModalItem.description}
+                    </p>
+                  ) : null}
                   
                   <div className="mt-6 pt-5 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
                     <span>* 제작 문의 시 이미지 제목을 전달하시면 더욱 원활한 맞춤 설계 상담이 가능합니다.</span>

@@ -26,7 +26,12 @@ import {
 export default function App() {
   const [activeTab, setActiveTab] = useState<string>('home');
   const [isAdmin, setIsAdmin] = useState<boolean>(() => {
-    return localStorage.getItem('hansol_is_admin') === 'true';
+    try {
+      return localStorage.getItem('hansol_is_admin') === 'true';
+    } catch (e) {
+      console.warn('localStorage is not available, defaulting isAdmin to false', e);
+      return false;
+    }
   });
   const [isAdminMode, setIsAdminMode] = useState<boolean>(false);
 
@@ -59,45 +64,86 @@ export default function App() {
 
   // Gallery items persistence with LocalStorage
   const [galleryItems, setGalleryItems] = useState<GalleryItem[]>(() => {
-    const saved = localStorage.getItem('hansol_gallery_v2');
-    return saved ? JSON.parse(saved) : INITIAL_GALLERY;
+    try {
+      const saved = localStorage.getItem('hansol_gallery_v21');
+      return saved ? JSON.parse(saved) : INITIAL_GALLERY;
+    } catch (e) {
+      console.error('Failed to parse galleryItems from localStorage', e);
+      return INITIAL_GALLERY;
+    }
   });
 
   // Client inquiries persistence with LocalStorage
   const [inquiries, setInquiries] = useState<Inquiry[]>(() => {
-    const saved = localStorage.getItem('hansol_inquiries_v2');
-    return saved ? JSON.parse(saved) : [
-      {
-        id: 'inq-1',
-        clientName: '김태윤 차장 (현대건설 현장관리)',
-        phone: '010-9876-5432',
-        brushType: '굴삭기 청소솔 – 쎈솔',
-        content: '인천 송도 아파트 토목 건설 현장에서 쓸 버킷 결착용 쎈솔 5대 특별 가공 및 단가 견적을 메일 혹은 문자로 우선 부탁드립니다.',
-        createdAt: '2026-05-21',
-        status: 'pending'
-      },
-      {
-        id: 'inq-2',
-        clientName: '김한아 매니저 (골프존파크 대화공단점)',
-        phone: '010-1234-5678',
-        brushType: '골프장/스크린골프용 브러쉬',
-        content: '스크린골프 타격 연습장 벙커용 특수매트 8세트 주문 가공 요청드립니다. 기성 사이즈 600x400 호환 여부 궁금합니다.',
-        createdAt: '2026-05-23',
-        status: 'completed'
-      }
-    ];
+    try {
+      const saved = localStorage.getItem('hansol_inquiries_v4');
+      return saved ? JSON.parse(saved) : [
+        {
+          id: 'inq-1',
+          clientName: '김태윤 차장 (현대건설 현장관리)',
+          phone: '010-9876-5432',
+          brushType: '굴삭기 청소솔 – 쎈솔',
+          content: '인천 송도 아파트 토목 건설 현장에서 쓸 버킷 결착용 쎈솔 5대 특별 가공 및 단가 견적을 메일 혹은 문자로 우선 부탁드립니다.',
+          createdAt: '2026-05-21',
+          status: 'pending'
+        },
+        {
+          id: 'inq-2',
+          clientName: '김한아 매니저 (골프존파크 대화공단점)',
+          phone: '010-1234-5678',
+          brushType: '골프장/스크린골프용 브러쉬',
+          content: '스크린골프 타격 연습장 벙커용 특수매트 8세트 주문 가공 요청드립니다. 기성 사이즈 600x400 호환 여부 궁금합니다.',
+          createdAt: '2026-05-23',
+          status: 'completed'
+        }
+      ];
+    } catch (e) {
+      console.error('Failed to parse inquiries from localStorage', e);
+      return [
+        {
+          id: 'inq-1',
+          clientName: '김태윤 차장 (현대건설 현장관리)',
+          phone: '010-9876-5432',
+          brushType: '굴삭기 청소솔 – 쎈솔',
+          content: '인천 송도 아파트 토목 건설 현장에서 쓸 버킷 결착용 쎈솔 5대 특별 가공 및 단가 견적을 메일 혹은 문자로 우선 부탁드립니다.',
+          createdAt: '2026-05-21',
+          status: 'pending'
+        },
+        {
+          id: 'inq-2',
+          clientName: '김한아 매니저 (골프존파크 대화공단점)',
+          phone: '010-1234-5678',
+          brushType: '골프장/스크린골프용 브러쉬',
+          content: '스크린골프 타격 연습장 벙커용 특수매트 8세트 주문 가공 요청드립니다. 기성 사이즈 600x400 호환 여부 궁금합니다.',
+          createdAt: '2026-05-23',
+          status: 'completed'
+        }
+      ];
+    }
   });
 
   useEffect(() => {
-    localStorage.setItem('hansol_gallery_v2', JSON.stringify(galleryItems));
+    try {
+      localStorage.setItem('hansol_gallery_v21', JSON.stringify(galleryItems));
+    } catch (e) {
+      console.warn('Unable to write galleryItems to localStorage', e);
+    }
   }, [galleryItems]);
 
   useEffect(() => {
-    localStorage.setItem('hansol_inquiries_v2', JSON.stringify(inquiries));
+    try {
+      localStorage.setItem('hansol_inquiries_v4', JSON.stringify(inquiries));
+    } catch (e) {
+      console.warn('Unable to write inquiries to localStorage', e);
+    }
   }, [inquiries]);
 
   useEffect(() => {
-    localStorage.setItem('hansol_is_admin', isAdmin ? 'true' : 'false');
+    try {
+      localStorage.setItem('hansol_is_admin', isAdmin ? 'true' : 'false');
+    } catch (e) {
+      console.warn('Unable to write isAdmin to localStorage', e);
+    }
   }, [isAdmin]);
 
   // Gallery Management handlers
@@ -318,6 +364,53 @@ export default function App() {
                       >
                         간편 견적 상담 신청하기 →
                       </button>
+                    </div>
+
+                  </div>
+                </section>
+
+                {/* Real Video Showcase Section (YouTube) */}
+                <section className="py-20 bg-slate-900 text-white border-b border-slate-950 relative overflow-hidden">
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(16,185,129,0.08),transparent_50%)]" />
+                  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+                    
+                    <div className="text-center max-w-3xl mx-auto mb-12">
+                      <span className="text-xs font-bold tracking-widest text-emerald-400 uppercase font-mono bg-emerald-950 border border-emerald-800 px-3 py-1.5 rounded-full inline-block mb-3">
+                        Production Technology Video
+                      </span>
+                      <h3 className="text-2xl sm:text-3.5xl font-extrabold tracking-tight text-white mb-4">
+                        한솔종합부러쉬 기계 제작 & 작업 현장 생생스케치
+                      </h3>
+                      <p className="text-slate-400 text-sm leading-relaxed max-w-2xl mx-auto">
+                        30년 숙련 기술 장인의 세밀한 자동 식모 가공 공정 및 실제 도로 보수 굴삭기용 청소솔 &apos;쎈솔&apos;의 현장 구동 동영상을 직접 감상하실 수 있습니다.
+                      </p>
+                    </div>
+
+                    <div className="max-w-4xl mx-auto">
+                      <div className="relative w-full overflow-hidden rounded-3xl border border-slate-800 shadow-2xl bg-slate-950" style={{ paddingBottom: '56.25%' }}>
+                        <iframe
+                          src="https://www.youtube.com/embed/LmZnohmsGtQ"
+                          title="한솔종합부러쉬 작업 공정 동영상"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                          allowFullScreen
+                          className="w-full h-full border-0 absolute inset-0"
+                        />
+                      </div>
+                      
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8">
+                        <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 text-center">
+                          <span className="text-emerald-400 font-bold text-lg font-mono block">30+ Years</span>
+                          <span className="text-slate-400 text-xs mt-1 block">전문 식모가공 역사</span>
+                        </div>
+                        <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 text-center">
+                          <span className="text-emerald-400 font-bold text-lg font-mono block">100% Real</span>
+                          <span className="text-slate-400 text-xs mt-1 block">국산 특수 강선 및 부자재</span>
+                        </div>
+                        <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 text-center">
+                          <span className="text-emerald-400 font-bold text-lg font-mono block">Customized</span>
+                          <span className="text-slate-400 text-xs mt-1 block">당일 즉각 도면 제작 출고</span>
+                        </div>
+                      </div>
                     </div>
 
                   </div>

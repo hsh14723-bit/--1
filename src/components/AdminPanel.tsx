@@ -136,14 +136,17 @@ export default function AdminPanel({
   // Form submit for gallery upload
   const handleUploadGalleryItem = (e: FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !description.trim() || !imageUrl) {
-      alert('모든 필수 항목과 이미지를 첨부하여야 합니다.');
+    if (!imageUrl) {
+      alert('등록할 이미지를 선택하거나 드래그하여 첨부해야 합니다.');
       return;
     }
 
+    const finalTitle = title.trim() || '신규 제작 제품';
+    const finalDescription = description.trim() || '';
+
     onAddGalleryItem({
-      title,
-      description,
+      title: finalTitle,
+      description: finalDescription,
       category,
       imageUrl
     });
@@ -154,7 +157,7 @@ export default function AdminPanel({
     setImageUrl('');
     setCategory('production');
     
-    setUploadSuccessMsg('성공적으로 공장 생산품 갤러리가 추가 등록되었습니다! 포트폴리오를 바로 확인해 보십시오.');
+    setUploadSuccessMsg('성공적으로 공장 생산품 사진이 추가 등록되었습니다!');
     setTimeout(() => setUploadSuccessMsg(''), 4000);
   };
 
@@ -551,42 +554,10 @@ export default function AdminPanel({
                   <span>신규 제품 사진 즉시 전송</span>
                 </h3>
                 <p className="text-xs text-slate-400 mb-6 leading-relaxed">
-                  모바일 폰카메라로 찍은 브러쉬 성형 사진을 직접 업로드하거나 등록할 위치를 지정해 기재합니다.
+                  모바일 폰카메라로 직접 촬영한 한솔종합부러쉬의 원본 제품 사진을 파일 선택하거나 드래그하여 등록해 보세요. (설명 입력글이 생략된 간편 즉시 등재 모드입니다)
                 </p>
 
                 <form onSubmit={handleUploadGalleryItem} className="space-y-4">
-                  {/* Title */}
-                  <div>
-                    <label className="block text-xs font-bold text-slate-600 mb-1" htmlFor="gallery-title">
-                      작품/사진 제목 *
-                    </label>
-                    <input
-                      id="gallery-title"
-                      type="text"
-                      placeholder="예: 현대제철용 내마모 롤 브러쉬 납품성공"
-                      value={title}
-                      onChange={(e) => setTitle(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-xl px-4 py-3 text-sm font-semibold outline-none transition"
-                      required
-                    />
-                  </div>
-
-                  {/* Description */}
-                  <div>
-                    <label className="block text-xs font-bold text-slate-600 mb-1" htmlFor="gallery-desc">
-                      상세가공/납품 부연설명 *
-                    </label>
-                    <textarea
-                      id="gallery-desc"
-                      rows={3}
-                      placeholder="예: 0.8지름 항균 가공 나일론 와이어를 초정밀 원심 충진 성형. 세밀한 비산 가림 가이드가 포함되어 세정력이 극도로 뛰어납니다."
-                      value={description}
-                      onChange={(e) => setDescription(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-xl px-4 py-3 text-sm font-semibold outline-none transition resize-none"
-                      required
-                    />
-                  </div>
-
                   {/* Category select */}
                   <div>
                     <label className="block text-xs font-bold text-slate-600 mb-1" htmlFor="gallery-category">
