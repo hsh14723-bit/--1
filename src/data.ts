@@ -88,7 +88,7 @@ export const INITIAL_GALLERY: GalleryItem[] = [
   {
     id: 'gal-1',
     title: '골프존 인조잔디 벙커 전용 매트 납품',
-    description: '',
+    description: '스크린골프장 실내외 벙커 타설용 맞춤 인조잔디 특수 매트 세트 납품 사례입니다.',
     category: 'production',
     imageUrl: GOLF_BUNKER_IMAGE,
     createdAt: '2026-05-10'
@@ -96,7 +96,7 @@ export const INITIAL_GALLERY: GalleryItem[] = [
   {
     id: 'gal-2',
     title: '도로 세척용 쎈솔(굴삭기 솔) 맞춤형 출고',
-    description: '',
+    description: '강력한 모재와 브래킷 호환성 설계를 적용한 굴삭기용 청소솔 쎈솔 브랜드 기성 출고 제품입니다.',
     category: 'production',
     imageUrl: EXCAVATOR_BRUSH_IMAGE,
     createdAt: '2026-05-18'

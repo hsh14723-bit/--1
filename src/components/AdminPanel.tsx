@@ -85,10 +85,13 @@ export default function AdminPanel({
     e.preventDefault();
     setLoginError('');
 
+    const cleanUsername = username.trim().toLowerCase();
+    const cleanPassword = password.trim();
+
     // Authorized credentials check
-    if (username === 'hansolbrush' && password === 'qq14721472pp') {
+    if (cleanUsername === 'hansolbrush' && cleanPassword === 'qq14721472pp') {
       onLoginSuccess();
-    } else if (username === 'admin' && password === 'admin') {
+    } else if (cleanUsername === 'admin' && cleanPassword === 'admin') {
       // Retain fallback access for safety during review if needed
       onLoginSuccess();
     } else {
@@ -96,7 +99,7 @@ export default function AdminPanel({
     }
   };
 
-  // Convert File to Base64 (Local upload simulator)
+  // Convert File to Base64 (original raw data, uncompressed)
   const processFile = (file: File) => {
     if (!file.type.startsWith('image/')) {
       alert('이미지 파일포맷만 지원합니다.');

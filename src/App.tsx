@@ -27,7 +27,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<string>('home');
   const [isAdmin, setIsAdmin] = useState<boolean>(() => {
     try {
-      return localStorage.getItem('hansol_is_admin') === 'true';
+      return localStorage.getItem('hansol_is_admin_v2') === 'true';
     } catch (e) {
       console.warn('localStorage is not available, defaulting isAdmin to false', e);
       return false;
@@ -62,10 +62,10 @@ export default function App() {
     }
   };
 
-  // Gallery items persistence with LocalStorage
+  // Gallery items persistence with LocalStorage (Initialized to starting two items, previous custom pictures are removed as requested)
   const [galleryItems, setGalleryItems] = useState<GalleryItem[]>(() => {
     try {
-      const saved = localStorage.getItem('hansol_gallery_v21');
+      const saved = localStorage.getItem('hansol_gallery_v25');
       return saved ? JSON.parse(saved) : INITIAL_GALLERY;
     } catch (e) {
       console.error('Failed to parse galleryItems from localStorage', e);
@@ -124,9 +124,12 @@ export default function App() {
 
   useEffect(() => {
     try {
-      localStorage.setItem('hansol_gallery_v21', JSON.stringify(galleryItems));
-    } catch (e) {
+      localStorage.setItem('hansol_gallery_v25', JSON.stringify(galleryItems));
+    } catch (e: any) {
       console.warn('Unable to write galleryItems to localStorage', e);
+      if (e.name === 'QuotaExceededError' || e.code === 22) {
+        alert('저장 용량이 초과되어 사진을 저장할 수 없습니다.\n불필요한 제품 사진을 갤러리 관리 목록에서 삭제하여 주시기 바랍니다.');
+      }
     }
   }, [galleryItems]);
 
@@ -140,7 +143,7 @@ export default function App() {
 
   useEffect(() => {
     try {
-      localStorage.setItem('hansol_is_admin', isAdmin ? 'true' : 'false');
+      localStorage.setItem('hansol_is_admin_v2', isAdmin ? 'true' : 'false');
     } catch (e) {
       console.warn('Unable to write isAdmin to localStorage', e);
     }
