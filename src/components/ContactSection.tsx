@@ -14,9 +14,10 @@ import { Inquiry } from '../types';
 
 interface ContactSectionProps {
   onAddInquiry: (inquiry: Omit<Inquiry, 'id' | 'createdAt' | 'status'>) => void;
+  onContactClick: (type: 'tel' | 'sms' | 'kakao', phone?: string) => void;
 }
 
-export default function ContactSection({ onAddInquiry }: ContactSectionProps) {
+export default function ContactSection({ onAddInquiry, onContactClick }: ContactSectionProps) {
   // Form State
   const [clientName, setClientName] = useState('');
   const [phone, setPhone] = useState('');
@@ -75,9 +76,7 @@ export default function ContactSection({ onAddInquiry }: ContactSectionProps) {
   };
 
   const handleSmsRequest = () => {
-    window.location.href = `sms:01046103701?body=${encodeURIComponent(
-      '[한솔종합부러쉬] 안녕하세요, 산업용 맞춤 브러쉬 제작 견적 상담 요청합니다. 연락 부탁드립니다.'
-    )}`;
+    onContactClick('sms', '010-4610-3701');
   };
 
   return (
@@ -120,48 +119,37 @@ export default function ContactSection({ onAddInquiry }: ContactSectionProps) {
                 </p>
               </div>
 
-              {/* Consultation info blocks */}
-              <div className="space-y-4">
-                <div className="flex items-start space-x-3 text-slate-300 text-sm">
-                  <Clock size={16} className="text-emerald-400 mt-1 shrink-0" />
-                  <div>
-                    <p className="font-bold">상담 가능 시간 : 연중무휴 24시간 수신</p>
-                    <p className="text-xs text-slate-400 mt-0.5">상담 부재중 시 가장 신속히 콜백 연락을 남깁니다.</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Connected Buttons Cluster */}
+                       {/* Connected Buttons Cluster */}
               <div className="space-y-3.5 pt-4">
                 
                 {/* 전화 바로걸기 1 */}
-                <a
-                  href="tel:010-4610-3701"
-                  className="flex items-center justify-between bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-4 rounded-2xl transition shadow-md shadow-emerald-950/50 block group cursor-pointer"
+                <button
+                  onClick={() => onContactClick('tel', '010-4610-3701')}
+                  className="w-full flex items-center justify-between bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-4 rounded-2xl transition shadow-md shadow-emerald-950/50 block group cursor-pointer text-left"
                 >
                   <div className="flex items-center space-x-3">
                     <PhoneCall size={18} />
                     <span className="text-base">010-4610-3701 전화걸기</span>
                   </div>
                   <span className="text-xs font-mono text-emerald-100 group-hover:translate-x-1 transition-transform">CALL NOW</span>
-                </a>
+                </button>
 
                 {/* 전화 바로걸기 2 */}
-                <a
-                  href="tel:010-7301-3701"
-                  className="flex items-center justify-between bg-emerald-800 hover:bg-emerald-700 text-white font-bold px-5 py-4 rounded-2xl transition block group cursor-pointer"
+                <button
+                  onClick={() => onContactClick('tel', '010-7301-3701')}
+                  className="w-full flex items-center justify-between bg-emerald-800 hover:bg-emerald-700 text-white font-bold px-5 py-4 rounded-2xl transition block group cursor-pointer text-left"
                 >
                   <div className="flex items-center space-x-3">
                     <PhoneCall size={18} />
                     <span className="text-base">010-7301-3701 전화걸기</span>
                   </div>
                   <span className="text-xs font-mono text-emerald-100 group-hover:translate-x-1 transition-transform">CALL NOW</span>
-                </a>
+                </button>
 
                 {/* 문자 전송 */}
                 <button
                   onClick={handleSmsRequest}
-                  className="w-full flex items-center justify-between bg-slate-900 border border-slate-700/65 hover:bg-slate-850 text-white font-bold px-5 py-4 rounded-2xl transition block group cursor-pointer"
+                  className="w-full flex items-center justify-between bg-slate-900 border border-slate-700/65 hover:bg-slate-850 text-white font-bold px-5 py-4 rounded-2xl transition block group cursor-pointer text-left"
                 >
                   <div className="flex items-center space-x-3">
                     <MessageSquare size={18} className="text-teal-400" />
@@ -171,18 +159,16 @@ export default function ContactSection({ onAddInquiry }: ContactSectionProps) {
                 </button>
 
                 {/* 카카오톡 링크 */}
-                <a
-                  href="https://open.kakao.com" // Kakao talk channel link
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center justify-between bg-yellow-400 text-slate-900 font-extrabold px-5 py-4 rounded-2xl hover:bg-yellow-500 transition block group cursor-pointer"
+                <button
+                  onClick={() => onContactClick('kakao')}
+                  className="w-full flex items-center justify-between bg-yellow-400 text-slate-900 font-extrabold px-5 py-4 rounded-2xl hover:bg-yellow-50 transition block group cursor-pointer text-left"
                 >
                   <div className="flex items-center space-x-3">
                     <MessageSquare size={18} className="text-slate-900 fill-current" />
                     <span className="text-base">카카오톡 실시간 문의</span>
                   </div>
                   <span className="text-xs font-mono text-yellow-950 group-hover:translate-x-1 transition-transform">TALK CHAT</span>
-                </a>
+                </button>
 
               </div>
             </div>

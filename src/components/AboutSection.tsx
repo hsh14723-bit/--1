@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { 
   Award, 
@@ -14,6 +14,17 @@ import {
 
 export default function AboutSection() {
   const [copied, setCopied] = useState(false);
+  const [phoneCopied, setPhoneCopied] = useState<string | null>(null);
+
+  const handlePhoneClick = (e: React.MouseEvent<HTMLAnchorElement>, num: string) => {
+    const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+    if (!isMobile) {
+      e.preventDefault();
+      navigator.clipboard.writeText(num);
+      setPhoneCopied(num);
+      setTimeout(() => setPhoneCopied(null), 2000);
+    }
+  };
 
   const coreValues = [
     {
@@ -133,19 +144,27 @@ export default function AboutSection() {
                   <div className="flex-1">
                     <span className="text-xs font-semibold text-slate-400 font-mono block">HOTLINE</span>
                     
-                    <div className="space-y-1.5 mt-1">
+                    <div className="space-y-1.5 mt-1 relative">
                       <a 
                         href="tel:010-4610-3701" 
-                        className="flex items-center justify-between text-slate-900 font-bold hover:text-emerald-600 hover:underline transition-colors block text-base"
+                        onClick={(e) => handlePhoneClick(e, '010-4610-3701')}
+                        className="flex items-center justify-between text-slate-900 font-bold hover:text-emerald-600 hover:underline transition-colors block text-base cursor-pointer"
                       >
                         <span>📞 대표전화 : 010-4610-3701</span>
                       </a>
                       <a 
                         href="tel:010-7301-3701" 
-                        className="flex items-center justify-between text-slate-900 font-bold hover:text-emerald-600 hover:underline transition-colors block text-base"
+                        onClick={(e) => handlePhoneClick(e, '010-7301-3701')}
+                        className="flex items-center justify-between text-slate-900 font-bold hover:text-emerald-600 hover:underline transition-colors block text-base cursor-pointer"
                       >
                         <span>📞 제작지원 : 010-7301-3701</span>
                       </a>
+
+                      {phoneCopied && (
+                        <div className="absolute left-0 -bottom-8 bg-slate-900 text-white font-semibold text-[11px] py-1 px-2.5 rounded-md shadow-md z-10 animate-pulse">
+                          💬 복사됨: {phoneCopied} (데스크톱 기기)
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

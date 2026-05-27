@@ -5,9 +5,10 @@ import { BRUSH_IMAGE_PRIMARY, INDUSTRIAL_STYLING } from '../data';
 
 interface HeroSectionProps {
   onNavigateToContact: () => void;
+  onContactClick: (type: 'tel' | 'sms' | 'kakao', phone?: string) => void;
 }
 
-export default function HeroSection({ onNavigateToContact }: HeroSectionProps) {
+export default function HeroSection({ onNavigateToContact, onContactClick }: HeroSectionProps) {
   const [currentSlide, setCurrentSlide] = useState(0);
 
   const slides = [
@@ -101,23 +102,21 @@ export default function HeroSection({ onNavigateToContact }: HeroSectionProps) {
                   <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
                 </button>
 
-                <a
-                  href="https://open.kakao.com" // Placeholder for Kakao
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center justify-center space-x-3 bg-slate-900/80 hover:bg-slate-800 text-white font-semibold px-6 py-4 rounded-xl border border-slate-700/60 transition-all"
+                <button
+                  onClick={() => onContactClick('kakao')}
+                  className="flex items-center justify-center space-x-3 bg-slate-900/80 hover:bg-slate-800 text-white font-semibold px-6 py-4 rounded-xl border border-slate-700/60 transition-all cursor-pointer"
                 >
                   <MessageCircle size={18} className="text-yellow-400 fill-current" />
                   <span>카카오톡 즉시 상담</span>
-                </a>
+                </button>
 
-                <a
-                  href="tel:010-4610-3701"
-                  className="flex items-center justify-center space-x-3 bg-white/10 hover:bg-white/20 text-white font-medium px-6 py-4 rounded-xl backdrop-blur-xs transition-all"
+                <button
+                  onClick={() => onContactClick('tel', '010-4610-3701')}
+                  className="flex items-center justify-center space-x-3 bg-white/10 hover:bg-white/20 text-white font-medium px-6 py-4 rounded-xl backdrop-blur-xs transition-all cursor-pointer"
                 >
                   <Phone size={16} className="text-emerald-400" />
                   <span>010-4610-3701 전화걸기</span>
-                </a>
+                </button>
               </div>
             </motion.div>
           </AnimatePresence>

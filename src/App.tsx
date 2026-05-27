@@ -6,6 +6,7 @@ import ProductsSection from './components/ProductsSection';
 import GallerySection from './components/GallerySection';
 import ContactSection from './components/ContactSection';
 import AdminPanel from './components/AdminPanel';
+import ContactHelperModal from './components/ContactHelperModal';
 import { GalleryItem, Inquiry } from './types';
 import { INITIAL_GALLERY, KEY_PRODUCTS } from './data';
 import { 
@@ -28,6 +29,33 @@ export default function App() {
     return localStorage.getItem('hansol_is_admin') === 'true';
   });
   const [isAdminMode, setIsAdminMode] = useState<boolean>(false);
+
+  // States and behavior for smart contact fallbacks (tel, sms, kakao)
+  const [contactModalOpen, setContactModalOpen] = useState(false);
+  const [contactModalTab, setContactModalTab] = useState<'tel' | 'sms' | 'kakao'>('tel');
+
+  const handleContactAction = (type: 'tel' | 'sms' | 'kakao', phone?: string) => {
+    const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+    if (isMobile) {
+      if (type === 'tel') {
+        window.location.href = `tel:${phone || '010-4610-3701'}`;
+      } else if (type === 'sms') {
+        const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+        const smsBody = '[한솔종합부러쉬] 안녕하세요, 산업용 맞춤 브러쉬 제작 견적 상담 요청합니다. 연락 부탁드립니다.';
+        const separator = isIOS ? '&' : '?';
+        const formattedPhone = (phone || '010-4610-3701').replace(/-/g, '');
+        window.location.href = `sms:${formattedPhone}${separator}body=${encodeURIComponent(smsBody)}`;
+      } else {
+        // Fallback or dialog for Mobile Kakao
+        setContactModalTab('kakao');
+        setContactModalOpen(true);
+      }
+    } else {
+      // Desktop
+      setContactModalTab(type);
+      setContactModalOpen(true);
+    }
+  };
 
   // Gallery items persistence with LocalStorage
   const [galleryItems, setGalleryItems] = useState<GalleryItem[]>(() => {
@@ -171,7 +199,10 @@ export default function App() {
               <div className="space-y-0">
                 
                 {/* Hero Slider */}
-                <HeroSection onNavigateToContact={handleNavigateToContact} />
+                <HeroSection 
+                  onNavigateToContact={handleNavigateToContact} 
+                  onContactClick={handleContactAction} 
+                />
 
                 {/* Core Branded Features / Value propositions */}
                 <section className="py-16 bg-white border-b border-slate-100">
@@ -367,7 +398,10 @@ export default function App() {
             )}
 
             {activeTab === 'contact' && (
-              <ContactSection onAddInquiry={handleAddInquiry} />
+              <ContactSection 
+                onAddInquiry={handleAddInquiry} 
+                onContactClick={handleContactAction}
+              />
             )}
             
             {activeTab === 'admin' && (
@@ -391,24 +425,22 @@ export default function App() {
       <div className="fixed bottom-6 right-6 z-45 flex flex-col items-end space-y-2 lg:hidden">
         
         {/* Kakao Talk instant connect button */}
-        <a
-          href="https://open.kakao.com"
-          target="_blank"
-          rel="noreferrer"
-          className="w-12 h-12 rounded-full bg-yellow-400 hover:bg-yellow-500 shadow-lg text-slate-950 flex items-center justify-center animate-bounce duration-1000"
+        <button
+          onClick={() => handleContactAction('kakao')}
+          className="w-12 h-12 rounded-full bg-yellow-400 hover:bg-yellow-500 shadow-lg text-slate-950 flex items-center justify-center animate-bounce duration-1000 cursor-pointer"
           title="카카오톡 즉시문의"
         >
           <MessageCircle size={22} className="fill-current text-slate-950" />
-        </a>
+        </button>
 
         {/* Dynamic Mobile Phone trigger */}
-        <a
-          href="tel:010-4610-3701"
-          className="flex items-center space-x-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-3 rounded-full shadow-lg font-bold text-xs"
+        <button
+          onClick={() => handleContactAction('tel', '010-4610-3701')}
+          className="flex items-center space-x-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-3 rounded-full shadow-lg font-bold text-xs cursor-pointer"
         >
           <PhoneCall size={14} className="animate-wiggle" />
           <span>전화 상담문의</span>
-        </a>
+        </button>
 
       </div>
 
@@ -514,6 +546,13 @@ export default function App() {
 
         </div>
       </footer>
+
+      {/* Global smart-contact modal */}
+      <ContactHelperModal 
+        isOpen={contactModalOpen} 
+        onClose={() => setContactModalOpen(false)} 
+        initialTab={contactModalTab} 
+      />
 
     </div>
   );
