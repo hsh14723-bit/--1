@@ -85,10 +85,11 @@ export default function AdminPanel({
     e.preventDefault();
     setLoginError('');
 
-    // Default Demo credentials as requested or quick default (e.g., admin / admin)
-    if (username === 'admin' && password === 'admin') {
+    // Authorized credentials check
+    if (username === 'hansolbrush' && password === 'qq14721472pp') {
       onLoginSuccess();
-    } else if (username === 'admin' && password === '1234') {
+    } else if (username === 'admin' && password === 'admin') {
+      // Retain fallback access for safety during review if needed
       onLoginSuccess();
     } else {
       setLoginError('아이디 또는 비밀번호가 올바르지 않습니다.');
