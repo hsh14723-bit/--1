@@ -24,6 +24,14 @@ export default function ContactSection({ onAddInquiry, onContactClick }: Contact
   const [brushType, setBrushType] = useState('원형 브러쉬');
   const [content, setContent] = useState('');
   
+  // Track submitted data to build direct SMS automated notification/redirection to 010-7301-3701
+  const [submittedData, setSubmittedData] = useState<{
+    clientName: string;
+    phone: string;
+    brushType: string;
+    content: string;
+  } | null>(null);
+
   // Notice Banner State
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [submitError, setSubmitError] = useState('');
@@ -39,6 +47,15 @@ export default function ContactSection({ onAddInquiry, onContactClick }: Contact
     '골프장/스크린골프용 브러쉬',
     '기타 / 상세 별도 협의'
   ];
+
+  const handleSmsRedirect = (data: { clientName: string; phone: string; brushType: string; content: string }) => {
+    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const targetPhone = '010-7301-3701';
+    const formattedPhone = targetPhone.replace(/-/g, '');
+    const smsBody = `[한솔종합부러쉬 가제작 견적의뢰]\n- 성함/업체명: ${data.clientName}\n- 연락처: ${data.phone}\n- 희망유형: ${data.brushType}\n- 의뢰내용: ${data.content}`;
+    const separator = isIOS ? '&' : '?';
+    window.location.href = `sms:${formattedPhone}${separator}body=${encodeURIComponent(smsBody)}`;
+  };
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -57,13 +74,17 @@ export default function ContactSection({ onAddInquiry, onContactClick }: Contact
       return;
     }
 
-    // Call state handler back to App.tsx (which stores in localStorage)
-    onAddInquiry({
+    const currentInquiry = {
       clientName,
       phone,
       brushType,
       content,
-    });
+    };
+
+    setSubmittedData(currentInquiry);
+
+    // Call state handler back to App.tsx (which stores in Firestore)
+    onAddInquiry(currentInquiry);
 
     // Reset forms
     setClientName('');
@@ -73,6 +94,14 @@ export default function ContactSection({ onAddInquiry, onContactClick }: Contact
     
     // Trigger Success Banner
     setSubmitSuccess(true);
+
+    // If on mobile devices, automatically initiate SMS screen for instant owner notification
+    const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+    if (isMobile) {
+      setTimeout(() => {
+        handleSmsRedirect(currentInquiry);
+      }, 1000);
+    }
   };
 
   const handleSmsRequest = () => {
@@ -299,7 +328,7 @@ export default function ContactSection({ onAddInquiry, onContactClick }: Contact
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={() => setSubmitSuccess(false)}
+              onClick={() => { setSubmitSuccess(false); setSubmittedData(null); }}
               className="absolute inset-0 bg-slate-950/70"
             />
 
@@ -318,16 +347,45 @@ export default function ContactSection({ onAddInquiry, onContactClick }: Contact
                 견적 문의 신청 완료!
               </h3>
               
-              <p className="text-slate-500 text-xs sm:text-sm leading-relaxed mb-6">
-                입력하신 상담서가 성공적으로 접수되었습니다.<br />
-                감사합니다. 최고 실력의 마스터가 검토 후 신속히 안내 전화를 드리겠습니다.
+              <p className="text-slate-500 text-xs sm:text-sm leading-relaxed mb-4">
+                상담신청서가 성공적으로 서버에 접수되었습니다.<br />
+                <span className="text-emerald-600 font-extrabold block mt-1 bg-emerald-50 py-1.5 px-2 rounded-lg border border-emerald-100/60">
+                  담당 마스터용 단말기(010-7301-3701) 연결 회신 대기 중
+                </span>
               </p>
 
+              {submittedData && (
+                <div className="space-y-3 mb-5 text-left">
+                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 text-xs space-y-1">
+                    <div className="font-bold text-slate-600 mb-2 border-b border-slate-200 pb-1 flex items-center justify-between">
+                      <span>📝 가제작 의뢰 내용 요약</span>
+                      <span className="text-[9px] bg-emerald-600 text-white font-mono px-1.5 py-0.5 rounded-sm">FIREBASE SECURE</span>
+                    </div>
+                    <div><span className="font-bold text-slate-700">신청자/업체명:</span> {submittedData.clientName}</div>
+                    <div><span className="font-bold text-slate-700">연락처:</span> {submittedData.phone}</div>
+                    <div><span className="font-bold text-slate-700">제작유형:</span> {submittedData.brushType}</div>
+                    <div className="text-slate-600 line-clamp-2 mt-1 italic"><span className="font-bold text-slate-700 not-italic">상세내용:</span> "{submittedData.content}"</div>
+                  </div>
+
+                  {/* SMS Quick trigger button */}
+                  <button
+                    onClick={() => handleSmsRedirect(submittedData)}
+                    className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-3.5 px-4 rounded-xl transition cursor-pointer text-sm shadow-md shadow-emerald-100 hover:scale-[1.01] duration-150"
+                  >
+                    <span>📱 010-7301-3701 문자로 전송하기</span>
+                  </button>
+                  
+                  <p className="text-[10px] text-slate-450 leading-relaxed text-center">
+                    * 위 단추를 클릭하시면 휴대폰 SMS 발송 화면으로 내용이 자동 구성되어 010-7301-3701로 즉각 접수 및 쾌속 다이렉트 상담 진행이 가능합니다.
+                  </p>
+                </div>
+              )}
+
               <button
-                onClick={() => setSubmitSuccess(false)}
-                className="w-full bg-slate-950 hover:bg-emerald-600 text-white font-bold py-3.5 rounded-xl transition cursor-pointer"
+                onClick={() => { setSubmitSuccess(false); setSubmittedData(null); }}
+                className="w-full bg-slate-950 hover:bg-slate-800 text-white font-bold py-3.0 rounded-xl transition cursor-pointer text-xs"
               >
-                닫기 및 홈으로
+                의뢰서 접수창 닫기
               </button>
             </motion.div>
           </div>
