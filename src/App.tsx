@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { 
   collection, 
   onSnapshot, 
@@ -17,11 +18,12 @@ import GallerySection from './components/GallerySection';
 import ContactSection from './components/ContactSection';
 import AdminPanel from './components/AdminPanel';
 import ContactHelperModal from './components/ContactHelperModal';
-import { GalleryItem, Inquiry } from './types';
+import { GalleryItem, Inquiry, ContactConfig } from './types';
 import { INITIAL_GALLERY, KEY_PRODUCTS } from './data';
 import { 
   PhoneCall, 
   MessageCircle, 
+  X,
   Settings2, 
   MapPin, 
   Clock, 
@@ -48,27 +50,122 @@ export default function App() {
   // States and behavior for smart contact fallbacks (tel, sms, kakao)
   const [contactModalOpen, setContactModalOpen] = useState(false);
   const [contactModalTab, setContactModalTab] = useState<'tel' | 'sms' | 'kakao'>('tel');
+  const [toast, setToast] = useState<{ title: string; message: string; type: 'tel' | 'sms' | 'kakao' } | null>(null);
+
+  // Synchronized site settings config (Tel, Kakao, etc)
+  const [contactConfig, setContactConfig] = useState<ContactConfig>({
+    kakaoUrl: 'https://open.kakao.com',
+    tel1: '010-4610-3701',
+    tel2: '010-7301-3701',
+    smsBody: '[한솔종합부러쉬] 안녕하세요, 산업용 맞춤 브러쉬 제작 견적 상담 요청합니다. 연락 부탁드립니다.'
+  });
+
+  // Load site settings real-time from Firestore, seed default on first run if database is fresh
+  useEffect(() => {
+    const docRef = doc(db, 'site_settings', 'contacts');
+    const unsubscribe = onSnapshot(docRef, (docSnap) => {
+      if (docSnap.exists()) {
+        setContactConfig(docSnap.data() as ContactConfig);
+      } else {
+        const defaultConfig: ContactConfig = {
+          kakaoUrl: 'https://open.kakao.com',
+          tel1: '010-4610-3701',
+          tel2: '010-7301-3701',
+          smsBody: '[한솔종합부러쉬] 안녕하세요, 산업용 맞춤 브러쉬 제작 견적 상담 요청합니다. 연락 부탁드립니다.'
+        };
+        setDoc(docRef, defaultConfig)
+          .then(() => console.log('Initialized default contact config in Firestore.'))
+          .catch((err) => console.warn('Could not initialize contact config in Firestore:', err));
+      }
+    }, (error) => {
+      console.warn('Silent config fallback:', error);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const handleUpdateContactConfig = async (newConfig: ContactConfig) => {
+    try {
+      const docRef = doc(db, 'site_settings', 'contacts');
+      await setDoc(docRef, newConfig);
+    } catch (err) {
+      console.error('Error saving new contact configs to Firestore:', err);
+      throw err;
+    }
+  };
+
+  // Auto-clear toast after 5 seconds
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => {
+        setToast(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
 
   const handleContactAction = (type: 'tel' | 'sms' | 'kakao', phone?: string) => {
+    const targetPhone = phone || contactConfig.tel1 || '010-4610-3701';
+    const formattedPhone = targetPhone.replace(/-/g, '');
     const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
-    if (isMobile) {
-      if (type === 'tel') {
-        window.location.href = `tel:${phone || '010-4610-3701'}`;
-      } else if (type === 'sms') {
-        const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-        const smsBody = '[한솔종합부러쉬] 안녕하세요, 산업용 맞춤 브러쉬 제작 견적 상담 요청합니다. 연락 부탁드립니다.';
-        const separator = isIOS ? '&' : '?';
-        const formattedPhone = (phone || '010-4610-3701').replace(/-/g, '');
-        window.location.href = `sms:${formattedPhone}${separator}body=${encodeURIComponent(smsBody)}`;
-      } else {
-        // Fallback or dialog for Mobile Kakao
-        setContactModalTab('kakao');
-        setContactModalOpen(true);
+
+    if (type === 'tel') {
+      // 1. Copy number for ultra convenience
+      try {
+        navigator.clipboard.writeText(targetPhone);
+      } catch (e) {
+        console.warn('Clipboard write failed', e);
       }
-    } else {
-      // Desktop
-      setContactModalTab(type);
-      setContactModalOpen(true);
+
+      // 2. Fire direct dial
+      window.location.href = `tel:${formattedPhone}`;
+
+      // 3. Fire Premium dynamic toast
+      setToast({
+        title: '📞 즉시 전화 연결 실행',
+        message: `한솔 종합 전문가 전담폰(${targetPhone})으로 직통 유선 연결을 개시합니다. (전화번호 자동복사 완료)`,
+        type: 'tel'
+      });
+    } else if (type === 'sms') {
+      const smsBody = contactConfig.smsBody || '[한솔종합부러쉬] 안녕하세요, 산업용 맞춤 브러쉬 제작 견적 상담 요청합니다. 연락 부탁드립니다.';
+      // 1. Copy sms body
+      try {
+        navigator.clipboard.writeText(smsBody);
+      } catch (e) {
+        console.warn('Clipboard write failed', e);
+      }
+
+      // 2. Fire direct SMS window
+      const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+      const separator = isIOS ? '&' : '?';
+      window.location.href = `sms:${formattedPhone}${separator}body=${encodeURIComponent(smsBody)}`;
+
+      // 3. Fire Premium dynamic toast
+      setToast({
+        title: '💬 즉시 문자 상담 접수',
+        message: `자동 인입 양식이 내장된 문자메시지 창을 전담 전문가 번호(${targetPhone})로 활성화했습니다.`,
+        type: 'sms'
+      });
+    } else if (type === 'kakao') {
+      // 1. Copy phone number to clipboard instantly as a reliable backup
+      try {
+        navigator.clipboard.writeText(targetPhone);
+      } catch (e) {
+        console.warn('Clipboard write failed', e);
+      }
+
+      // 2. Open KakaoTalk direct URL!
+      const kakaoRoomUrl = contactConfig?.kakaoUrl && contactConfig.kakaoUrl.startsWith('http')
+        ? contactConfig.kakaoUrl
+        : 'https://open.kakao.com';
+
+      window.open(kakaoRoomUrl, '_blank', 'noopener,noreferrer');
+
+      // 3. Fire Premium golden toast
+      setToast({
+        title: '💛 카카오톡 실시간 1:1 상담 연결',
+        message: `한솔 공식 카카오톡 1:1 라이브 채팅방을 즉시 실행합니다. (상담 중 백업을 위해 대표번호 ${targetPhone} 가 클립보드에 자동 복사되었습니다!)`,
+        type: 'kakao'
+      });
     }
   };
 
@@ -387,6 +484,8 @@ export default function App() {
             onDeleteInquiry={handleDeleteInquiry}
             onLoginSuccess={handleLoginSuccess}
             isAdmin={isAdmin}
+            contactConfig={contactConfig}
+            onUpdateContactConfig={handleUpdateContactConfig}
           />
         ) : (
           <div>
@@ -397,6 +496,7 @@ export default function App() {
                 {/* Hero Slider */}
                 <HeroSection 
                   onNavigateToContact={handleNavigateToContact} 
+                  contactConfig={contactConfig}
                   onContactClick={handleContactAction} 
                 />
 
@@ -644,6 +744,7 @@ export default function App() {
               <ContactSection 
                 onAddInquiry={handleAddInquiry} 
                 onContactClick={handleContactAction}
+                contactConfig={contactConfig}
               />
             )}
             
@@ -657,6 +758,8 @@ export default function App() {
                 onDeleteInquiry={handleDeleteInquiry}
                 onLoginSuccess={handleLoginSuccess}
                 isAdmin={isAdmin}
+                contactConfig={contactConfig}
+                onUpdateContactConfig={handleUpdateContactConfig}
               />
             )}
           </div>
@@ -664,26 +767,27 @@ export default function App() {
 
       </main>
 
-      {/* Floating Fast Consultation Mobile Action Button */}
+               {/* Floating Fast Consultation Mobile Action Button */}
       <div className="fixed bottom-6 right-6 z-45 flex flex-col items-end space-y-2 lg:hidden">
         
         {/* Kakao Talk instant connect button */}
         <button
-          onClick={() => handleContactAction('kakao')}
-          className="w-12 h-12 rounded-full bg-yellow-400 hover:bg-yellow-500 shadow-lg text-slate-950 flex items-center justify-center animate-bounce duration-1000 cursor-pointer"
+          onClick={() => handleContactAction('kakao', contactConfig.tel1)}
+          className="w-12 h-12 rounded-full bg-yellow-400 hover:bg-yellow-500 shadow-lg text-slate-950 flex items-center justify-center animate-bounce duration-1005 cursor-pointer"
           title="카카오톡 즉시문의"
         >
           <MessageCircle size={22} className="fill-current text-slate-950" />
         </button>
 
         {/* Dynamic Mobile Phone trigger */}
-        <button
-          onClick={() => handleContactAction('tel', '010-4610-3701')}
+        <a
+          href={`tel:${(contactConfig.tel1 || '010-4610-3701').replace(/-/g, '')}`}
+          onClick={() => handleContactAction('tel', contactConfig.tel1)}
           className="flex items-center space-x-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-3 rounded-full shadow-lg font-bold text-xs cursor-pointer"
         >
           <PhoneCall size={14} className="animate-wiggle" />
           <span>전화 상담문의</span>
-        </button>
+        </a>
 
       </div>
 
@@ -703,7 +807,7 @@ export default function App() {
                 </h3>
               </div>
               <p className="text-slate-400 text-xs sm:text-sm leading-relaxed max-w-sm">
-                최선의 가공 단가와 최상의 내구도로 승부하는 산업 전담 맞춤형 고기능성 브러쉬 기술 전문 기업입니다. 골프존 벙커매트, 원형/롤 청소용 브러쉬 대량 수동 가공까지 완벽 납품합니다.
+                최선의 가공 단가와 최상의 내구도로 승부하는 산업 전담 맞춤형 고기능성 브러쉬 기술 전문 기업입니다. 골프존 벙커매트, 원형/롤 청소용 브러쉬 대량 가공까지 완벽 납품합니다.
               </p>
               <div className="text-slate-500 text-[11px] font-mono font-bold uppercase tracking-wider">
                 Industrial Brush Manufacturing Leader
@@ -719,13 +823,17 @@ export default function App() {
                 <li className="flex items-start space-x-2">
                   <span className="text-emerald-500 font-bold shrink-0">📞</span>
                   <div>
-                    <span className="font-semibold block text-slate-200">상담: 010-4610-3701</span>
+                    <a href={`tel:${(contactConfig.tel1 || '010-4610-3701').replace(/-/g, '')}`} className="font-semibold block text-slate-200 hover:text-emerald-400 transition-colors">
+                      상담대기: {contactConfig.tel1 || '010-4610-3701'}
+                    </a>
                   </div>
                 </li>
                 <li className="flex items-start space-x-2">
                   <span className="text-emerald-500 font-bold shrink-0">📞</span>
                   <div>
-                    <span className="font-semibold block text-slate-200">상담: 010-7301-3701</span>
+                    <a href={`tel:${(contactConfig.tel2 || '010-7301-3701').replace(/-/g, '')}`} className="font-semibold block text-slate-200 hover:text-emerald-400 transition-colors">
+                      제작지원: {contactConfig.tel2 || '010-7301-3701'}
+                    </a>
                   </div>
                 </li>
                 <li className="flex items-start space-x-2">
@@ -795,7 +903,62 @@ export default function App() {
         isOpen={contactModalOpen} 
         onClose={() => setContactModalOpen(false)} 
         initialTab={contactModalTab} 
+        contactConfig={contactConfig}
       />
+
+      {/* Instant Action Feedback Toast */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 30, scale: 0.9 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+            className="fixed bottom-6 right-6 z-50 max-w-sm w-full bg-white text-slate-900 p-5 rounded-2xl shadow-xl border border-slate-100/90 flex flex-col space-y-2.5 overflow-hidden"
+          >
+            {/* Top color indicator bar */}
+            <div className={`absolute top-0 left-0 right-0 h-1.5 ${
+              toast.type === 'tel' 
+                ? 'bg-emerald-500' 
+                : toast.type === 'sms' 
+                  ? 'bg-teal-500' 
+                  : 'bg-yellow-400'
+            }`} />
+
+            <div className="flex items-start justify-between gap-2 pt-1.5">
+              <h4 className="font-extrabold text-sm sm:text-base tracking-tight text-slate-950 flex items-center gap-1.5">
+                {toast.title}
+              </h4>
+              <button 
+                onClick={() => setToast(null)}
+                className="text-slate-400 hover:text-slate-600 p-1 rounded-full hover:bg-slate-100 transition cursor-pointer"
+              >
+                <X size={14} />
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-600 leading-relaxed font-semibold">
+              {toast.message}
+            </p>
+
+            {/* Premium progress bar timer */}
+            <div className="w-full bg-slate-100 h-1 rounded-full overflow-hidden mt-1">
+              <motion.div 
+                initial={{ width: '100%' }}
+                animate={{ width: '0%' }}
+                transition={{ duration: 5, ease: 'linear' }}
+                className={`h-full ${
+                  toast.type === 'tel' 
+                    ? 'bg-emerald-500' 
+                    : toast.type === 'sms' 
+                      ? 'bg-teal-500' 
+                      : 'bg-yellow-400'
+                }`}
+              />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
     </div>
   );

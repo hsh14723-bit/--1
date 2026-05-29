@@ -18,9 +18,11 @@ import {
   PhoneCall,
   Menu,
   CheckCircle2,
-  X
+  X,
+  Settings2,
+  Check
 } from 'lucide-react';
-import { GalleryItem, Inquiry } from '../types';
+import { GalleryItem, Inquiry, ContactConfig } from '../types';
 
 interface AdminPanelProps {
   galleryItems: GalleryItem[];
@@ -31,6 +33,8 @@ interface AdminPanelProps {
   onDeleteInquiry: (id: string) => void;
   onLoginSuccess: () => void;
   isAdmin: boolean;
+  contactConfig: ContactConfig;
+  onUpdateContactConfig: (config: ContactConfig) => Promise<void>;
 }
 
 const PRESET_STOCK_IMAGES = [
@@ -60,7 +64,9 @@ export default function AdminPanel({
   onUpdateInquiryStatus,
   onDeleteInquiry,
   onLoginSuccess,
-  isAdmin
+  isAdmin,
+  contactConfig,
+  onUpdateContactConfig
 }: AdminPanelProps) {
   // Login Form States
   const [username, setUsername] = useState('');
@@ -76,7 +82,46 @@ export default function AdminPanel({
   const [uploadSuccessMsg, setUploadSuccessMsg] = useState('');
 
   // Dashboard Sub-navigation Tab
-  const [adminSubTab, setAdminSubTab] = useState<'dashboard' | 'inquiries' | 'gallery'>('dashboard');
+  const [adminSubTab, setAdminSubTab] = useState<'dashboard' | 'inquiries' | 'gallery' | 'settings'>('dashboard');
+
+  // Contact Config Edit States
+  const [cfgTel1, setCfgTel1] = useState(contactConfig?.tel1 || '010-4610-3701');
+  const [cfgTel2, setCfgTel2] = useState(contactConfig?.tel2 || '010-7301-3701');
+  const [cfgKakaoUrl, setCfgKakaoUrl] = useState(contactConfig?.kakaoUrl || 'https://open.kakao.com');
+  const [cfgSmsBody, setCfgSmsBody] = useState(contactConfig?.smsBody || '');
+  const [isSavingConfig, setIsSavingConfig] = useState(false);
+  const [configSaveSuccess, setConfigSaveSuccess] = useState(false);
+
+  // Sync with prop changes if any
+  useState(() => {
+    if (contactConfig) {
+      setCfgTel1(contactConfig.tel1);
+      setCfgTel2(contactConfig.tel2);
+      setCfgKakaoUrl(contactConfig.kakaoUrl);
+      setCfgSmsBody(contactConfig.smsBody);
+    }
+  });
+
+  const handleUpdateConfigSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setIsSavingConfig(true);
+    setConfigSaveSuccess(false);
+    try {
+      await onUpdateContactConfig({
+        tel1: cfgTel1.trim(),
+        tel2: cfgTel2.trim(),
+        kakaoUrl: cfgKakaoUrl.trim(),
+        smsBody: cfgSmsBody
+      });
+      setConfigSaveSuccess(true);
+      setTimeout(() => setConfigSaveSuccess(false), 3000);
+    } catch (err) {
+      console.error('Error saving configs in Admin:', err);
+      alert('설정 저장 중 오류가 발생했습니다.');
+    } finally {
+      setIsSavingConfig(false);
+    }
+  };
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -264,7 +309,7 @@ export default function AdminPanel({
           </div>
 
           {/* Quick Subtab bar */}
-          <div className="flex bg-slate-200/60 p-1 rounded-xl border border-slate-200/40">
+          <div className="flex flex-wrap md:flex-nowrap bg-slate-200/60 p-1 rounded-xl border border-slate-200/40 gap-1">
             <button
               onClick={() => setAdminSubTab('dashboard')}
               className={`px-4 py-2 rounded-lg text-xs font-extrabold transition-all cursor-pointer ${
@@ -293,6 +338,15 @@ export default function AdminPanel({
               }`}
             >
               갤러리 추가/관리
+            </button>
+            <button
+              onClick={() => setAdminSubTab('settings')}
+              className={`px-4 py-2 rounded-lg text-xs font-extrabold transition-all cursor-pointer flex items-center space-x-1.5 ${
+                adminSubTab === 'settings' ? 'bg-white text-slate-950 shadow-xs' : 'text-slate-600 hover:text-slate-950'
+              }`}
+            >
+              <Settings2 size={13} className="text-emerald-650" />
+              <span>연락망 및 카카오 관리</span>
             </button>
           </div>
         </div>
@@ -730,6 +784,124 @@ export default function AdminPanel({
                 </div>
               </div>
 
+            </motion.div>
+          )}
+
+          {/* SubTab 4: Settings Management */}
+          {adminSubTab === 'settings' && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              key="settings"
+              className="grid grid-cols-1 lg:grid-cols-12 gap-8"
+            >
+              <div className="lg:col-span-5 bg-white border border-slate-100 p-6 sm:p-8 rounded-3xl shadow-xs space-y-6">
+                <div>
+                  <h3 className="text-lg font-extrabold text-slate-950 tracking-tight flex items-center space-x-2">
+                    <Settings2 size={20} className="text-emerald-700" />
+                    <span>실시간 바로가기 채널 조정</span>
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-1">
+                    고객들이 홈페이지 접속 후 클릭하는 다이렉트 긴급 버튼의 번호와 카카오 상담 주소를 실시간 조정합니다.
+                  </p>
+                </div>
+
+                <div className="space-y-4 text-xs bg-slate-50 p-4 rounded-2xl border border-slate-100 leading-relaxed text-slate-600 font-sans">
+                  <p className="font-semibold text-slate-800">💡 즉시연동 및 1:1 디렉트 연결 규칙</p>
+                  <p>
+                    전화(tel:), 문자(sms:) 및 카카오톡 오픈채팅 주소는 입력 즉시 홈페이지 전반의 <span className="text-emerald-600 font-bold">"카카오톡 실시간 상담"</span>, <span className="text-emerald-600 font-bold">"대표번호 전화걸기"</span> 등 모든 단추에 100% 무중단 변동 반영됩니다.
+                  </p>
+                  <p>
+                    오픈채팅방 개설 주소 혹은 카카오 채널 주소를 카카오톡 다이렉트 주소란에 삽입하여 복사가 필요 없는 명품 원클릭 연동 서비스를 완성해 보세요!
+                  </p>
+                </div>
+              </div>
+
+              <div className="lg:col-span-7 bg-white border border-slate-100 p-6 sm:p-8 rounded-3xl shadow-xs">
+                <form onSubmit={handleUpdateConfigSubmit} className="space-y-5">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5" htmlFor="cfgTel1">
+                      대표 1차 핫라인 번호 (설계/도면 담당)
+                    </label>
+                    <input
+                      id="cfgTel1"
+                      type="text"
+                      placeholder="예시: 010-4610-3701"
+                      value={cfgTel1}
+                      onChange={(e) => setCfgTel1(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-xl px-4 py-3 text-sm outline-none transition font-semibold"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5" htmlFor="cfgTel2">
+                      제작 지원 번호 (출고/발송 담당)
+                    </label>
+                    <input
+                      id="cfgTel2"
+                      type="text"
+                      placeholder="예시: 010-7301-3701"
+                      value={cfgTel2}
+                      onChange={(e) => setCfgTel2(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-xl px-4 py-3 text-sm outline-none transition font-semibold"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5" htmlFor="cfgKakaoUrl">
+                      카카오톡 다이렉트 상담 URL (OpenChat 이나 채널주소)
+                    </label>
+                    <input
+                      id="cfgKakaoUrl"
+                      type="url"
+                      placeholder="예시: https://open.kakao.com/o/sXXXXXX"
+                      value={cfgKakaoUrl}
+                      onChange={(e) => setCfgKakaoUrl(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-xl px-4 py-3 text-sm outline-none transition font-mono text-emerald-700 font-semibold"
+                    />
+                    <p className="text-[10px] text-slate-400 mt-1 leading-normal">
+                      카카오톡 오픈채팅방 링크 또는 카카오 채널 주소를 입력하면, 고객이 카카오상담 클릭 시 번호복사창 대신 톡상담 앱으로 무중단으로 밀어 넣어 집니다.
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5" htmlFor="cfgSmsBody">
+                      원터치 문자 양식 (SMS Body 자동템플릿)
+                    </label>
+                    <textarea
+                      id="cfgSmsBody"
+                      rows={3}
+                      placeholder="문자 문의 클릭 시 기본 생성될 자동완성 문구입니다."
+                      value={cfgSmsBody}
+                      onChange={(e) => setCfgSmsBody(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-xl p-4 text-sm outline-none transition font-semibold leading-relaxed"
+                    />
+                  </div>
+
+                  {configSaveSuccess && (
+                    <div className="flex items-center space-x-2 text-emerald-700 text-xs font-bold bg-emerald-50 p-3 rounded-xl border border-emerald-100 animate-fade-in">
+                      <CheckCircle2 size={15} />
+                      <span>연락망 설정 및 카카오채널 정보가 Firestore 실시간 DB에 동기화 완료되었습니다!</span>
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={isSavingConfig}
+                    className="w-full flex items-center justify-center space-x-2 bg-slate-900 border border-slate-800 text-yellow-400 hover:bg-slate-800 py-4 rounded-xl font-bold text-sm transition shadow-md shadow-slate-900/10 cursor-pointer disabled:opacity-50"
+                  >
+                    {isSavingConfig ? (
+                      <span className="animate-spin inline-block w-4.5 h-4.5 border-2 border-slate-500 border-t-yellow-400 rounded-full" />
+                    ) : (
+                      <>
+                        <Check size={18} />
+                        <span>한솔 바로가기 채널 규칙 일괄 적용</span>
+                      </>
+                    )}
+                  </button>
+                </form>
+              </div>
             </motion.div>
           )}
 

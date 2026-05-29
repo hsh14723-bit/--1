@@ -32,3 +32,11 @@ export interface KeyProduct {
   imageUrl: string;
   features: string[];
 }
+
+export interface ContactConfig {
+  kakaoUrl: string;
+  tel1: string;
+  tel2: string;
+  smsBody: string;
+}
+

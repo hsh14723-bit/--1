@@ -49,5 +49,10 @@ service cloud.firestore {
       allow update: if isValidInquiry(request.resource.data)
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
     }
+
+    // Collection: Site Settings (Corporate dynamic links)
+    match /site_settings/{settingId} {
+      allow read, write: if true;
+    }
   }
 }

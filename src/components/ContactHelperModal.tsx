@@ -12,14 +12,16 @@ import {
   Smartphone,
   Sparkles
 } from 'lucide-react';
+import { ContactConfig } from '../types';
 
 interface ContactHelperModalProps {
   isOpen: boolean;
   onClose: () => void;
   initialTab?: 'tel' | 'sms' | 'kakao';
+  contactConfig: ContactConfig;
 }
 
-export default function ContactHelperModal({ isOpen, onClose, initialTab = 'tel' }: ContactHelperModalProps) {
+export default function ContactHelperModal({ isOpen, onClose, initialTab = 'tel', contactConfig }: ContactHelperModalProps) {
   const [activeTab, setActiveTab] = useState<'tel' | 'sms' | 'kakao'>(initialTab);
   const [copiedText, setCopiedText] = useState<string | null>(null);
 
@@ -41,7 +43,7 @@ export default function ContactHelperModal({ isOpen, onClose, initialTab = 'tel'
 
   if (!isOpen) return null;
 
-  const defaultSmsMsg = '[한솔종합부러쉬] 안녕하세요, 산업용 맞춤 브러쉬 제작 견적 상담 요청합니다. 연락 부탁드립니다.';
+  const defaultSmsMsg = contactConfig?.smsBody || '[한솔종합부러쉬] 안녕하세요, 산업용 맞춤 브러쉬 제작 견적 상담 요청합니다. 연락 부탁드립니다.';
 
   return (
     <AnimatePresence>
@@ -149,12 +151,14 @@ export default function ContactHelperModal({ isOpen, onClose, initialTab = 'tel'
                 <div className="space-y-3">
                   <div className="flex items-center justify-between p-4 bg-slate-50 border border-slate-100 rounded-2xl hover:border-emerald-250 transition-all">
                     <div>
-                      <span className="text-[10px] font-bold text-slate-400 font-mono block">MAIN HOTLINE</span>
-                      <span className="text-base sm:text-lg font-extrabold text-slate-900 font-mono">010-4610-3701</span>
+                      <span className="text-[10px] font-bold text-slate-400 font-mono block">MAIN HOTLINE (대표 전문가)</span>
+                      <a href={`tel:${(contactConfig?.tel1 || '010-4610-3701').replace(/-/g, '')}`} className="text-base sm:text-lg font-extrabold text-emerald-600 hover:underline font-mono" title="터치 시 바로 통화">
+                        {contactConfig?.tel1 || '010-4610-3701'}
+                      </a>
                       <span className="text-xs text-slate-500 block">설계 디자인, 단품 및 대량 가공 전문 마스터</span>
                     </div>
                     <button
-                      onClick={() => handleCopy('010-4610-3701', 'main')}
+                      onClick={() => handleCopy(contactConfig?.tel1 || '010-4610-3701', 'main')}
                       className={`p-3 rounded-xl transition-all cursor-pointer flex items-center justify-center ${
                         copiedText === 'main'
                           ? 'bg-emerald-600 text-white'
@@ -168,12 +172,14 @@ export default function ContactHelperModal({ isOpen, onClose, initialTab = 'tel'
 
                   <div className="flex items-center justify-between p-4 bg-slate-50 border border-slate-100 rounded-2xl hover:border-emerald-250 transition-all">
                     <div>
-                      <span className="text-[10px] font-bold text-slate-400 font-mono block">PRODUCTION DESK</span>
-                      <span className="text-base sm:text-lg font-extrabold text-slate-900 font-mono">010-7301-3701</span>
+                      <span className="text-[10px] font-bold text-slate-400 font-mono block">PRODUCTION DESK (제작 지원)</span>
+                      <a href={`tel:${(contactConfig?.tel2 || '010-7301-3701').replace(/-/g, '')}`} className="text-base sm:text-lg font-extrabold text-emerald-600 hover:underline font-mono" title="터치 시 바로 통화">
+                        {contactConfig?.tel2 || '010-7301-3701'}
+                      </a>
                       <span className="text-xs text-slate-500 block">쎈솔 제작지원, 벙커매트 가공 및 발송 담당</span>
                     </div>
                     <button
-                      onClick={() => handleCopy('010-7301-3701', 'sub')}
+                      onClick={() => handleCopy(contactConfig?.tel2 || '010-7301-3701', 'sub')}
                       className={`p-3 rounded-xl transition-all cursor-pointer flex items-center justify-center ${
                         copiedText === 'sub'
                           ? 'bg-emerald-600 text-white'
@@ -205,10 +211,12 @@ export default function ContactHelperModal({ isOpen, onClose, initialTab = 'tel'
                   <div className="bg-slate-55 p-4 rounded-2xl border border-slate-100 flex items-center justify-between">
                     <div>
                       <span className="text-[10px] font-bold text-slate-400 font-mono block">받는 번호 (SMS TO)</span>
-                      <span className="font-extrabold text-slate-800 font-mono text-base">010-4610-3701</span>
+                      <a href={`sms:${(contactConfig?.tel1 || '010-4610-3701').replace(/-/g, '')}`} className="font-extrabold text-emerald-600 hover:underline font-mono text-base" title="터치 시 바로 문자">
+                        {contactConfig?.tel1 || '010-4610-3701'}
+                      </a>
                     </div>
                     <button
-                      onClick={() => handleCopy('010-4610-3701', 'sms-phone')}
+                      onClick={() => handleCopy(contactConfig?.tel1 || '010-4610-3701', 'sms-phone')}
                       className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer ${
                         copiedText === 'sms-phone'
                           ? 'bg-emerald-600 text-white'
@@ -223,7 +231,7 @@ export default function ContactHelperModal({ isOpen, onClose, initialTab = 'tel'
                   {/* Body text template */}
                   <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-2">
                     <span className="text-[10px] font-bold text-slate-400 block">전송 본문 템플릿 (MSGPACK)</span>
-                    <div className="bg-white border border-slate-150 rounded-xl p-3 text-xs text-slate-700 leading-relaxed font-semibold font-sans min-h-[70px]">
+                    <div className="bg-white border border-slate-150 rounded-xl p-3 text-xs text-slate-705 leading-relaxed font-semibold font-sans min-h-[70px]">
                       {defaultSmsMsg}
                     </div>
                     <div className="flex justify-end pt-1">
@@ -255,57 +263,69 @@ export default function ContactHelperModal({ isOpen, onClose, initialTab = 'tel'
                 animate={{ opacity: 1, y: 0 }}
                 className="space-y-4"
               >
-                <div className="bg-yellow-50 rounded-2xl p-5 border border-yellow-100 text-center space-y-4">
-                  <div className="w-12 h-12 bg-yellow-400 rounded-xl flex items-center justify-center text-yellow-950 mx-auto">
-                    <MessageCircle size={28} className="fill-current" />
+                {/* 1. Direct Consultation Launch Zone (First Choice) */}
+                <div className="bg-gradient-to-br from-yellow-400 to-amber-300 rounded-2xl p-6 text-center shadow-lg border border-yellow-400 space-y-4">
+                  <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center text-yellow-950 mx-auto shadow-md">
+                    <MessageCircle size={32} className="fill-current text-yellow-500" />
                   </div>
                   
                   <div className="space-y-1">
-                    <h4 className="font-extrabold text-yellow-950 text-sm">
-                      카카오톡 ID 검색 및 친구 등록
+                    <h4 className="font-black text-slate-900 text-base sm:text-lg">
+                      카카오톡 1:1 채팅 즉시 연결 (실시간)
                     </h4>
-                    <p className="text-xs text-yellow-900/80 leading-relaxed max-w-sm mx-auto">
-                      현재 별도의 1:1 주소 도메인이 고정 등록되지 않았거나 브라우저 환경에 따라 바로 들어가지지 않을 시, 가장 확실한 연락처 친구등록 방법입니다.
+                    <p className="text-xs text-slate-800/85 leading-relaxed max-w-sm mx-auto font-medium">
+                      전화 통화가 곤란하시거나 도면/이미지 수치 자료를 실시간으로 빠르게 전송하고 싶으실 때, 가장 똑똑하고 신속한 디지털 견적 상담 채널입니다.
                     </p>
                   </div>
 
-                  <div className="bg-white border border-yellow-100 rounded-xl p-3 max-w-xs mx-auto flex items-center justify-between">
-                    <div className="text-left">
-                      <span className="text-[9px] font-mono font-bold text-slate-400 block">KAKAOTALK ID / PHONE</span>
-                      <span className="font-bold font-mono text-slate-900 text-sm">010-4610-3701</span>
-                    </div>
-                    <button
-                      onClick={() => handleCopy('010-4610-3701', 'kakao-phone')}
-                      className={`px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition flex items-center gap-1 cursor-pointer ${
-                        copiedText === 'kakao-phone'
-                          ? 'bg-emerald-600 text-white animate-pulse'
-                          : 'bg-yellow-400 text-yellow-950 hover:bg-yellow-500'
-                      }`}
-                    >
-                      {copiedText === 'kakao-phone' ? <Check size={10} /> : <Copy size={10} />}
-                      <span>{copiedText === 'kakao-phone' ? '복사됨' : '복사하기'}</span>
-                    </button>
-                  </div>
-
-                  <p className="text-[10px] text-yellow-900/60 leading-normal">
-                    [친구 추가] ➔ [연락처로 추가] ➔ 한글 성함 기재 후 등록 시 신속하게 직접 톡상담을 시작하겠습니다.
-                  </p>
+                  <a
+                    href={contactConfig?.kakaoUrl && contactConfig.kakaoUrl.startsWith('http') ? contactConfig.kakaoUrl : 'https://open.kakao.com'}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full flex items-center justify-center space-x-2.5 bg-slate-900 hover:bg-slate-950 text-white font-extrabold py-4 rounded-xl text-xs sm:text-sm transition-all cursor-pointer shadow-md tracking-wider"
+                  >
+                    <MessageCircle size={16} className="fill-current text-yellow-400" />
+                    <span>지금 즉시 1:1 실시간 상담방 입장</span>
+                  </a>
                 </div>
 
-                {/* Optional default action links */}
-                <div className="flex flex-col sm:flex-row gap-2 mt-4">
-                  <a
-                    href="https://open.kakao.com" // If they have real url they can exchange here
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex-1 flex items-center justify-center space-x-2 bg-slate-900 hover:bg-black text-white font-bold py-3.5 rounded-xl text-xs transition cursor-pointer"
-                  >
-                    <span>카카오톡 공식 홈 이동</span>
-                  </a>
-                  
+                {/* 2. Direct ID Backup / Manual Friend Search (Second Backup Option) */}
+                <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h5 className="text-xs font-bold text-slate-800 flex items-center gap-1">
+                        <span>💡 모바일 카카오톡 수동 친구 추가 방법</span>
+                      </h5>
+                      <span className="text-[10px] text-slate-400 block pt-0.5 leading-normal">
+                        위 링크로 입장이 불가능할 시 백업용 친구 추가 연락처입니다.
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="bg-white border border-slate-150 rounded-xl p-3 flex items-center justify-between">
+                    <div className="text-left">
+                      <span className="text-[9px] font-mono font-bold text-slate-400 block">KAKAOTALK PHONE NUMBER</span>
+                      <span className="font-extrabold font-mono text-slate-900 text-xs sm:text-sm">{contactConfig?.tel1 || '010-4610-3701'}</span>
+                    </div>
+                    <button
+                      onClick={() => handleCopy(contactConfig?.tel1 || '010-4610-3701', 'kakao-phone')}
+                      className={`px-3 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer ${
+                        copiedText === 'kakao-phone'
+                          ? 'bg-emerald-600 text-white animate-pulse'
+                          : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                      }`}
+                    >
+                      {copiedText === 'kakao-phone' ? <Check size={12} /> : <Copy size={12} />}
+                      <span>{copiedText === 'kakao-phone' ? '번호 복사 완료!' : '연락처 복사'}</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Optional footer triggers */}
+                <div className="flex justify-end pt-2">
                   <button
                     onClick={onClose}
-                    className="flex-1 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold py-3.5 rounded-xl text-xs transition cursor-pointer"
+                    className="w-full sm:w-auto px-5 py-3 bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 font-bold rounded-xl text-xs transition cursor-pointer text-center"
                   >
                     확인 및 닫기
                   </button>

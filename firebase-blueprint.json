@@ -79,6 +79,10 @@
     "/inquiries/{inquiryId}": {
       "schema": "Inquiry",
       "description": "Allows clients to request estimates and allows staff to manage them."
+    },
+    "/site_settings/{settingId}": {
+      "schema": "object",
+      "description": "Exposes globally configured contact links and corporate settings."
     }
   }
 }

@@ -10,14 +10,15 @@ import {
   CheckCircle2,
   AlertCircle
 } from 'lucide-react';
-import { Inquiry } from '../types';
+import { Inquiry, ContactConfig } from '../types';
 
 interface ContactSectionProps {
   onAddInquiry: (inquiry: Omit<Inquiry, 'id' | 'createdAt' | 'status'>) => void;
   onContactClick: (type: 'tel' | 'sms' | 'kakao', phone?: string) => void;
+  contactConfig: ContactConfig;
 }
 
-export default function ContactSection({ onAddInquiry, onContactClick }: ContactSectionProps) {
+export default function ContactSection({ onAddInquiry, onContactClick, contactConfig }: ContactSectionProps) {
   // Form State
   const [clientName, setClientName] = useState('');
   const [phone, setPhone] = useState('');
@@ -152,49 +153,52 @@ export default function ContactSection({ onAddInquiry, onContactClick }: Contact
               <div className="space-y-3.5 pt-4">
                 
                 {/* 전화 바로걸기 1 */}
-                <button
-                  onClick={() => onContactClick('tel', '010-4610-3701')}
+                <a
+                  href={`tel:${(contactConfig.tel1 || '010-4610-3701').replace(/-/g, '')}`}
+                  onClick={() => onContactClick('tel', contactConfig.tel1)}
                   className="w-full flex items-center justify-between bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-4 rounded-2xl transition shadow-md shadow-emerald-950/50 block group cursor-pointer text-left"
                 >
                   <div className="flex items-center space-x-3">
                     <PhoneCall size={18} />
-                    <span className="text-base">010-4610-3701 전화걸기</span>
+                    <span className="text-sm sm:text-base">{contactConfig.tel1 || '010-4610-3701'} 전화하기</span>
                   </div>
                   <span className="text-xs font-mono text-emerald-100 group-hover:translate-x-1 transition-transform">CALL NOW</span>
-                </button>
+                </a>
 
                 {/* 전화 바로걸기 2 */}
-                <button
-                  onClick={() => onContactClick('tel', '010-7301-3701')}
+                <a
+                  href={`tel:${(contactConfig.tel2 || '010-7301-3701').replace(/-/g, '')}`}
+                  onClick={() => onContactClick('tel', contactConfig.tel2)}
                   className="w-full flex items-center justify-between bg-emerald-800 hover:bg-emerald-700 text-white font-bold px-5 py-4 rounded-2xl transition block group cursor-pointer text-left"
                 >
                   <div className="flex items-center space-x-3">
                     <PhoneCall size={18} />
-                    <span className="text-base">010-7301-3701 전화걸기</span>
+                    <span className="text-sm sm:text-base">{contactConfig.tel2 || '010-7301-3701'} 제작지원</span>
                   </div>
                   <span className="text-xs font-mono text-emerald-100 group-hover:translate-x-1 transition-transform">CALL NOW</span>
-                </button>
+                </a>
 
                 {/* 문자 전송 */}
-                <button
-                  onClick={handleSmsRequest}
+                <a
+                  href={`sms:${(contactConfig.tel1 || '010-4610-3701').replace(/-/g, '')}${typeof navigator !== 'undefined' && /iPhone|iPad|iPod/i.test(navigator.userAgent) ? '&' : '?'}body=${encodeURIComponent(contactConfig.smsBody)}`}
+                  onClick={() => onContactClick('sms', contactConfig.tel1)}
                   className="w-full flex items-center justify-between bg-slate-900 border border-slate-700/65 hover:bg-slate-850 text-white font-bold px-5 py-4 rounded-2xl transition block group cursor-pointer text-left"
                 >
                   <div className="flex items-center space-x-3">
                     <MessageSquare size={18} className="text-teal-400" />
-                    <span className="text-base">문자 메시지 견적문의</span>
+                    <span className="text-sm sm:text-base">문자 메시지 견적작성</span>
                   </div>
                   <span className="text-xs font-mono text-slate-400 group-hover:translate-x-1 transition-transform">SMS SEND</span>
-                </button>
+                </a>
 
                 {/* 카카오톡 링크 */}
                 <button
-                  onClick={() => onContactClick('kakao')}
-                  className="w-full flex items-center justify-between bg-yellow-400 text-slate-900 font-extrabold px-5 py-4 rounded-2xl hover:bg-yellow-50 transition block group cursor-pointer text-left"
+                  onClick={() => onContactClick('kakao', contactConfig.tel1)}
+                  className="w-full flex items-center justify-between bg-yellow-400 text-slate-900 font-extrabold px-5 py-4 rounded-2xl hover:bg-yellow-500 transition block group cursor-pointer text-left"
                 >
                   <div className="flex items-center space-x-3">
                     <MessageSquare size={18} className="text-slate-900 fill-current" />
-                    <span className="text-base">카카오톡 실시간 문의</span>
+                    <span className="text-sm sm:text-base font-bold text-slate-900">카카오톡 실시간 1:1 상담</span>
                   </div>
                   <span className="text-xs font-mono text-yellow-950 group-hover:translate-x-1 transition-transform">TALK CHAT</span>
                 </button>

@@ -2,13 +2,15 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ChevronLeft, ChevronRight, Phone, MessageCircle, ArrowRight } from 'lucide-react';
 import { BRUSH_IMAGE_PRIMARY, INDUSTRIAL_STYLING } from '../data';
+import { ContactConfig } from '../types';
 
 interface HeroSectionProps {
   onNavigateToContact: () => void;
+  contactConfig: ContactConfig;
   onContactClick: (type: 'tel' | 'sms' | 'kakao', phone?: string) => void;
 }
 
-export default function HeroSection({ onNavigateToContact, onContactClick }: HeroSectionProps) {
+export default function HeroSection({ onNavigateToContact, contactConfig, onContactClick }: HeroSectionProps) {
   const [currentSlide, setCurrentSlide] = useState(0);
 
   const slides = [
@@ -103,20 +105,26 @@ export default function HeroSection({ onNavigateToContact, onContactClick }: Her
                 </button>
 
                 <button
-                  onClick={() => onContactClick('kakao')}
-                  className="flex items-center justify-center space-x-3 bg-slate-900/80 hover:bg-slate-800 text-white font-semibold px-6 py-4 rounded-xl border border-slate-700/60 transition-all cursor-pointer"
+                  onClick={() => {
+                    // Trigger the direct routing, clipboard fallback, and premium toast
+                    onContactClick('kakao', contactConfig.tel1);
+                  }}
+                  className="flex items-center justify-center space-x-3 bg-slate-900/80 hover:bg-slate-800 text-white font-semibold px-6 py-4 rounded-xl border border-slate-705 transition-all cursor-pointer"
                 >
                   <MessageCircle size={18} className="text-yellow-400 fill-current" />
                   <span>카카오톡 즉시 상담</span>
                 </button>
 
-                <button
-                  onClick={() => onContactClick('tel', '010-4610-3701')}
+                <a
+                  href={`tel:${(contactConfig.tel1 || '010-4610-3701').replace(/-/g, '')}`}
+                  onClick={() => {
+                    onContactClick('tel', contactConfig.tel1);
+                  }}
                   className="flex items-center justify-center space-x-3 bg-white/10 hover:bg-white/20 text-white font-medium px-6 py-4 rounded-xl backdrop-blur-xs transition-all cursor-pointer"
                 >
                   <Phone size={16} className="text-emerald-400" />
-                  <span>010-4610-3701 전화걸기</span>
-                </button>
+                  <span>{contactConfig.tel1 || '010-4610-3701'} 전화걸기</span>
+                </a>
               </div>
             </motion.div>
           </AnimatePresence>
