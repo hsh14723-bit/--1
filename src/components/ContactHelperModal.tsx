@@ -279,7 +279,7 @@ export default function ContactHelperModal({ isOpen, onClose, initialTab = 'tel'
                   </div>
 
                   <a
-                    href={contactConfig?.kakaoUrl && contactConfig.kakaoUrl.startsWith('http') ? contactConfig.kakaoUrl : 'https://open.kakao.com'}
+                    href={!contactConfig?.kakaoUrl || contactConfig.kakaoUrl === 'https://open.kakao.com' ? 'https://open.kakao.com/o/s0Hut7wi' : contactConfig.kakaoUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="w-full flex items-center justify-center space-x-2.5 bg-slate-900 hover:bg-slate-950 text-white font-extrabold py-4 rounded-xl text-xs sm:text-sm transition-all cursor-pointer shadow-md tracking-wider"

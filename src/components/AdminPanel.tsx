@@ -87,7 +87,7 @@ export default function AdminPanel({
   // Contact Config Edit States
   const [cfgTel1, setCfgTel1] = useState(contactConfig?.tel1 || '010-4610-3701');
   const [cfgTel2, setCfgTel2] = useState(contactConfig?.tel2 || '010-7301-3701');
-  const [cfgKakaoUrl, setCfgKakaoUrl] = useState(contactConfig?.kakaoUrl || 'https://open.kakao.com');
+  const [cfgKakaoUrl, setCfgKakaoUrl] = useState(!contactConfig?.kakaoUrl || contactConfig.kakaoUrl === 'https://open.kakao.com' ? 'https://open.kakao.com/o/s0Hut7wi' : contactConfig.kakaoUrl);
   const [cfgSmsBody, setCfgSmsBody] = useState(contactConfig?.smsBody || '');
   const [isSavingConfig, setIsSavingConfig] = useState(false);
   const [configSaveSuccess, setConfigSaveSuccess] = useState(false);
@@ -97,7 +97,7 @@ export default function AdminPanel({
     if (contactConfig) {
       setCfgTel1(contactConfig.tel1);
       setCfgTel2(contactConfig.tel2);
-      setCfgKakaoUrl(contactConfig.kakaoUrl);
+      setCfgKakaoUrl(!contactConfig.kakaoUrl || contactConfig.kakaoUrl === 'https://open.kakao.com' ? 'https://open.kakao.com/o/s0Hut7wi' : contactConfig.kakaoUrl);
       setCfgSmsBody(contactConfig.smsBody);
     }
   });

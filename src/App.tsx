@@ -54,7 +54,7 @@ export default function App() {
 
   // Synchronized site settings config (Tel, Kakao, etc)
   const [contactConfig, setContactConfig] = useState<ContactConfig>({
-    kakaoUrl: 'https://open.kakao.com',
+    kakaoUrl: 'https://open.kakao.com/o/s0Hut7wi',
     tel1: '010-4610-3701',
     tel2: '010-7301-3701',
     smsBody: '[한솔종합부러쉬] 안녕하세요, 산업용 맞춤 브러쉬 제작 견적 상담 요청합니다. 연락 부탁드립니다.'
@@ -65,10 +65,20 @@ export default function App() {
     const docRef = doc(db, 'site_settings', 'contacts');
     const unsubscribe = onSnapshot(docRef, (docSnap) => {
       if (docSnap.exists()) {
-        setContactConfig(docSnap.data() as ContactConfig);
+        const data = docSnap.data() as ContactConfig;
+        // Self-heal/Upgrade old placeholder URL in database to the real chat room URL
+        if (!data.kakaoUrl || data.kakaoUrl === 'https://open.kakao.com') {
+          const updatedConfig = { ...data, kakaoUrl: 'https://open.kakao.com/o/s0Hut7wi' };
+          setContactConfig(updatedConfig);
+          updateDoc(docRef, { kakaoUrl: 'https://open.kakao.com/o/s0Hut7wi' })
+            .then(() => console.log('Auto-migrated old Kakao placeholder URL to real chat room URL in Firestore.'))
+            .catch(err => console.warn('Silent migration warning:', err));
+        } else {
+          setContactConfig(data);
+        }
       } else {
         const defaultConfig: ContactConfig = {
-          kakaoUrl: 'https://open.kakao.com',
+          kakaoUrl: 'https://open.kakao.com/o/s0Hut7wi',
           tel1: '010-4610-3701',
           tel2: '010-7301-3701',
           smsBody: '[한솔종합부러쉬] 안녕하세요, 산업용 맞춤 브러쉬 제작 견적 상담 요청합니다. 연락 부탁드립니다.'
@@ -154,7 +164,9 @@ export default function App() {
       }
 
       // 2. Open the direct chat room URL immediately, just like Naver TalkTalk!
-      const targetUrl = contactConfig?.kakaoUrl || 'https://open.kakao.com';
+      const targetUrl = !contactConfig?.kakaoUrl || contactConfig.kakaoUrl === 'https://open.kakao.com'
+        ? 'https://open.kakao.com/o/s0Hut7wi'
+        : contactConfig.kakaoUrl;
       window.open(targetUrl, '_blank', 'noopener,noreferrer');
 
       // 3. Open the helper modal, pre-focused on KakaoTalk tab to explain the connection flow as a standby backup
