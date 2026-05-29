@@ -153,17 +153,18 @@ export default function App() {
         console.warn('Clipboard write failed', e);
       }
 
-      // 2. Open KakaoTalk direct URL!
-      const kakaoRoomUrl = contactConfig?.kakaoUrl && contactConfig.kakaoUrl.startsWith('http')
-        ? contactConfig.kakaoUrl
-        : 'https://open.kakao.com';
+      // 2. Open the direct chat room URL immediately, just like Naver TalkTalk!
+      const targetUrl = contactConfig?.kakaoUrl || 'https://open.kakao.com';
+      window.open(targetUrl, '_blank', 'noopener,noreferrer');
 
-      window.open(kakaoRoomUrl, '_blank', 'noopener,noreferrer');
+      // 3. Open the helper modal, pre-focused on KakaoTalk tab to explain the connection flow as a standby backup
+      setContactModalTab('kakao');
+      setContactModalOpen(true);
 
-      // 3. Fire Premium golden toast
+      // 4. Fire Premium golden toast with helpful direct connection confirmation
       setToast({
-        title: '💛 카카오톡 실시간 1:1 상담 연결',
-        message: `한솔 공식 카카오톡 1:1 라이브 채팅방을 즉시 실행합니다. (상담 중 백업을 위해 대표번호 ${targetPhone} 가 클립보드에 자동 복사되었습니다!)`,
+        title: '💛 실시간 1:1 상담 연결',
+        message: `실시간 1:1 상담방으로 즉시 연결을 시작합니다. (상담 중 백업을 위해 대표번호 ${targetPhone} 가 클립보드에 자동 복사되었습니다!)`,
         type: 'kakao'
       });
     }

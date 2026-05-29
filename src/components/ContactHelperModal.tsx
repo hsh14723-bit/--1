@@ -289,6 +289,20 @@ export default function ContactHelperModal({ isOpen, onClose, initialTab = 'tel'
                   </a>
                 </div>
 
+                {/* ⚠️ Automatic Connection Warning & Direct Choice Guide */}
+                <div className="bg-emerald-50 border border-emerald-250/70 rounded-2xl p-4 space-y-2 text-left">
+                  <div className="flex items-center space-x-2 text-emerald-800 font-extrabold text-xs sm:text-sm">
+                    <span className="text-sm">💬</span>
+                    <span>네이버 톡톡 & 카카오톡 1:1 다이렉트 채널 안내</span>
+                  </div>
+                  <p className="text-[11px] text-emerald-950 leading-relaxed font-semibold">
+                    클릭 시 네이버 톡톡 상담창 또는 실시간 카카오 오픈챗방으로 <strong className="font-extrabold text-emerald-900 text-xs">무중단 직접 이동</strong>됩니다. 만약 대표 홈(open.kakao.com)으로 연결된다면 관리자 설정에서 전용 오픈채팅/채널 주소가 등록되지 않은 상태입니다.
+                  </p>
+                  <p className="text-[11px] text-emerald-800 font-semibold leading-normal">
+                    💡 <span className="underline">안내</span>: 만약 바로 연결이 안 될 경우, 아래의 <strong className="font-bold text-slate-950">수동 친구 추가 방법</strong>으로 전담 번호(<span className="font-mono">{contactConfig?.tel1 || '010-4610-3701'}</span>)를 기기에 연락처 저장 후 카카오톡으로 즉시 문의 주시면 실시간으로 친절히 안내 도와드리겠습니다!
+                  </p>
+                </div>
+
                 {/* 2. Direct ID Backup / Manual Friend Search (Second Backup Option) */}
                 <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 space-y-3">
                   <div className="flex items-center justify-between">
